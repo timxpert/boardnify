@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boardnify - Standalone Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&family=Epilogue:wght@400;500;700&family=Satoshi:wght@400;500;700&family=General+Sans:wght@400;500;700&family=Cabinet+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=general-sans@400,500,700&f[]=cabinet-grotesk@400,500,700&display=swap" rel="stylesheet">
+  <style>
+/* Global SaaS Foundations */
+:root {
+    --brand-primary: #f97316;
+    --brand-dark: #ea580c;
+    --brand-light: #ffedd5;
+    --sidebar-width: 260px;
+}
+
+body {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-color: #f8fafc;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Dashboard Grid Layout (Full Width) */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.view-container {
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+}
+
+/* Glassmorphism Components */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* Typography & Transitions */
+.font-cabinet { font-family: 'Cabinet Grotesk', sans-serif; }
+.font-satoshi { font-family: 'Satoshi', sans-serif; }
+
+.smooth-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Navigation Link States */
+.nav-link.active {
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    color: var(--brand-primary);
+}
+
+/* Kanban Columns */
+.kanban-column {
+    min-height: calc(100vh - 200px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Utility Classes */
+.fluid-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+/* Role Specific Views */
+body.role-client .designer-only { display: none !important; }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'jakarta': ['"Plus Jakarta Sans"', 'sans-serif'],
+            'outfit': ['"Outfit"', 'sans-serif'],
+            'manrope': ['"Manrope"', 'sans-serif'],
+            'dmsans': ['"DM Sans"', 'sans-serif'],
+            'epilogue': ['"Epilogue"', 'sans-serif'],
+            'satoshi': ['"Satoshi"', 'sans-serif'],
+            'generalsans': ['"General Sans"', 'sans-serif'],
+            'cabinet': ['"Cabinet Grotesk"', 'sans-serif']
+          },
+          colors: {
+            brand: '#F97316', // Orange-500
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-900 h-screen flex overflow-hidden font-outfit">
+  
+  <!-- Sidebar Navigation -->
+  <aside class="w-[260px] flex-shrink-0 bg-white border-r border-gray-200 z-50 flex flex-col py-8">
+    <div class="px-6 text-2xl font-bold tracking-tight text-gray-800 mb-10 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-brand flex items-center justify-center text-white shadow-lg shadow-brand/20">B</div>
+      <span class="font-cabinet">Boardnify</span>
+    </div>
+
+    <nav class="w-full flex flex-col gap-1.5 flex-grow">
+      <a href="#" data-route="dashboard" class="nav-link active flex items-center py-2.5 px-4 rounded-xl text-gray-900 font-semibold transition-all">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+        Dashboard
+      </a>
+      <a href="#" data-route="moodboard" class="nav-link flex items-center py-2.5 px-4 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-all">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        Moodboard Builder
+      </a>
+      <a href="#" data-route="kanban" class="nav-link flex items-center py-2.5 px-4 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-all">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+        Task Tracker
+      </a>
+      <a href="#" data-route="library" class="nav-link flex items-center py-2.5 px-4 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-all">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        Media Library
+      </a>
+      <a href="#" data-route="styleframes" class="nav-link flex items-center py-2.5 px-4 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-all">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+        Style Frames
+      </a>
+      <a href="#" data-route="motionprojects" class="nav-link flex items-center py-2.5 px-4 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-all">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+        Motion Projects
+      </a>
+      <a href="#" data-route="reviews" class="nav-link flex items-center justify-between py-2.5 px-4 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-all">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+          Reviews
+        </div>
+        <span id="nav-reviews-badge" class="bg-brand text-white text-[10px] font-bold px-2 py-0.5 rounded-full hidden">0</span>
+      </a>
+    </nav>
+    
+    <div class="mt-auto pb-4 px-4 w-full flex flex-col gap-2">
+      <a href="#" data-route="trash" class="nav-link flex items-center justify-between py-3 px-4 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          Trash
+        </div>
+        <span id="nav-trash-badge" class="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
+      </a>
+      <button class="w-full border border-gray-200 py-2 rounded-lg text-gray-600 hover:bg-gray-100 font-medium transition flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area with Topbar -->
+  <div class="flex-1 flex flex-col relative w-full h-full overflow-hidden">
+    
+    <!-- Global Topbar (Client Selector & Role Toggle) -->
+    <div class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 z-30 shadow-sm flex-shrink-0">
+      <div class="flex items-center gap-6">
+        <span class="text-sm font-medium text-gray-500 uppercase tracking-widest">Global View</span>
+        
+        <div class="h-6 w-px bg-gray-200"></div>
+        
+        <!-- Role Toggle -->
+        <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+          <button id="role-toggle-designer" class="px-3 py-1 text-xs font-bold rounded-md bg-white text-gray-800 shadow-sm smooth-transition">Designer</button>
+          <button id="role-toggle-client" class="px-3 py-1 text-xs font-bold rounded-md text-gray-500 hover:text-gray-800 smooth-transition">Client View</button>
+        </div>
+      </div>
+        <div class="flex items-center gap-4">
+          <label for="global-client-select" class="text-sm font-medium text-gray-600">Active Client:</label>
+          <select id="global-client-select" class="bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-brand focus:border-brand block w-48 p-2 font-medium shadow-sm outline-none cursor-pointer">
+            <option value="All">All Clients</option>
+            <option value="Acme Corp">Acme Corp</option>
+            <option value="Globex">Globex</option>
+            <option value="Initech">Initech</option>
+          </select>
+        </div>
+
+        <div class="h-6 w-px bg-gray-200"></div>
+
+        <!-- Theme Toggle -->
+        <button id="theme-toggle" class="p-2 text-gray-400 hover:text-brand bg-gray-50 hover:bg-gray-100 rounded-lg smooth-transition border border-gray-200" title="Toggle Dark/Light Mode">
+          <svg id="theme-icon-sun" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.95 16.95l.707.707M7.05 7.05l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+          <svg id="theme-icon-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- View containers injected dynamically -->
+    <main class="flex-1 relative overflow-hidden flex flex-col" id="app"></main>
+  </div>
+
+  <script>
+    // --- MOCKS ---
+    window.io = () => ({
+      on: (event, callback) => console.log(`Socket ON: ${event}`),
+      emit: (event, data) => console.log(`Socket EMIT: ${event}`, data),
+      connect: () => console.log('Socket Connected (Mock)')
+    });
+
+    if (!navigator.mediaDevices) {
+        navigator.mediaDevices = {};
+    }
+    if (!navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia = async () => {
+            throw new Error("Microphone access not available in standalone demo.");
+        };
+    }
+
+    // --- UTILS ---
+    window.EditorHistory = class {
+      constructor() { this.undoStack = []; this.redoStack = []; }
+      push(item) { this.undoStack.push(item); this.redoStack = []; }
+      undo() {
+        const item = this.undoStack.pop();
+        if(item) { item.undo(); this.redoStack.push(item); }
+      }
+      redo() {
+        const item = this.redoStack.pop();
+        if(item) { item.redo(); this.undoStack.push(item); }
+      }
+    };
+    window.activeHistory = new window.EditorHistory();
+
+    window.EditorClipboard = {
+      _data: null,
+      copy(data) { this._data = data; window.showToast('Copied to clipboard'); },
+      paste() { 
+        if(!this._data) return null;
+        const dup = JSON.parse(JSON.stringify(this._data));
+        dup.id = 'el-' + Date.now();
+        dup.x += 20; dup.y += 20;
+        return dup;
+      }
+    };
+
+    window.TextToolbar = {
+      _el: null,
+      show(target) {
+        if(this._el) this._el.remove();
+        const rect = target.getBoundingClientRect();
+        const toolbar = document.createElement('div');
+        toolbar.className = 'fixed bg-white shadow-2xl rounded-xl border border-gray-100 p-2 flex gap-1 z-[60] animate-fade-in';
+        toolbar.style.top = (rect.top - 60) + 'px';
+        toolbar.style.left = rect.left + 'px';
+        toolbar.innerHTML = `
+          <button class="p-2 hover:bg-gray-100 rounded smooth-transition text-xs font-bold">B</button>
+          <button class="p-2 hover:bg-gray-100 rounded smooth-transition text-xs italic">I</button>
+          <div class="w-px h-4 bg-gray-200 mt-2 mx-1"></div>
+          <select class="text-[10px] font-bold border-none bg-transparent focus:ring-0">
+            <option>Satoshi</option>
+            <option>Outfit</option>
+          </select>
+        `;
+        document.body.appendChild(toolbar);
+        this._el = toolbar;
+      },
+      hide() { if(this._el) { this._el.remove(); this._el = null; } }
+    };
+
+    window.initAudioRecorder = (btn, onStop) => {
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>';
+    };
+    window.renderAudioPlayer = (url, name) => `<div class="p-2 bg-gray-100 rounded-lg text-xs">Audio Player Mock</div>`;
+
+    window.triggerNotification = (type, data) => {
+      window.showToast(`Notification sent: ${type}`);
+    };
+
+    // --- COMPONENTS ---
+    window.initCollaborators = (id, projId) => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = `<img src="https://i.pravatar.cc/100?img=11" class="w-8 h-8 rounded-full border-2 border-white">`;
+    };
+
+    window.renderInviteModal = (container) => { console.log('Invite Modal Init'); };
+    window.openInviteModal = () => { window.showToast('Invite Modal would open here.'); };
+
+    // --- VIEWS ---
+    // Dashboard JS
+    window.initDashboard = function(container, socket) {
+      const projects = window.appData.projects;
+      const filteredProjects = window.activeClient === 'All' ? projects : projects.filter(p => p.client === window.activeClient);
+      
+      const stats = {
+        active: filteredProjects.length,
+        ready: filteredProjects.filter(p => p.status === 'In Review').length,
+        done: filteredProjects.filter(p => p.status === 'Approved').length,
+        collabs: new Set(window.appData.activity.map(a => a.user)).size
+      };
+
+      container.innerHTML = `
+        <div class="view-container">
+          <header class="flex justify-between items-end mb-12">
+            <div>
+              <h1 class="text-5xl font-bold text-gray-900 tracking-tight mb-3">Workspace</h1>
+              <p class="text-gray-500 text-xl font-medium">Welcome back! Here's what's happening with <span class="text-brand font-bold">${window.activeClient}</span>.</p>
+            </div>
+            <button id="new-project-btn" class="bg-gray-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl smooth-transition shadow-2xl flex items-center gap-3 text-sm uppercase tracking-widest hover:-translate-y-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              New Project
+            </button>
+          </header>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12" id="stats-grid">
+            <div class="glass-card p-8 rounded-3xl smooth-transition hover:shadow-2xl group border-l-4 border-l-brand">
+              <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 block">Active Projects</span>
+              <div class="flex items-center justify-between">
+                <span class="text-4xl font-black text-gray-800">${stats.active}</span>
+                <div class="w-12 h-12 rounded-2xl bg-orange-50 text-brand flex items-center justify-center group-hover:scale-110 smooth-transition">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+              </div>
+            </div>
+            <div class="glass-card p-8 rounded-3xl smooth-transition hover:shadow-2xl group border-l-4 border-l-blue-500">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 block">Awaiting Review</span>
+                <div class="flex items-center justify-between">
+                  <span class="text-4xl font-black text-gray-800">${stats.ready}</span>
+                  <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:scale-110 smooth-transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  </div>
+                </div>
+            </div>
+            <div class="glass-card p-8 rounded-3xl smooth-transition hover:shadow-2xl group border-l-4 border-l-green-500">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 block">Completed</span>
+                <div class="flex items-center justify-between">
+                  <span class="text-4xl font-black text-gray-800">${stats.done}</span>
+                  <div class="w-12 h-12 rounded-2xl bg-green-50 text-green-500 flex items-center justify-center group-hover:scale-110 smooth-transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  </div>
+                </div>
+            </div>
+            <div class="glass-card p-8 rounded-3xl smooth-transition hover:shadow-2xl group border-l-4 border-l-purple-500">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 block">Collaborators</span>
+                <div class="flex items-center justify-between">
+                  <span class="text-4xl font-black text-gray-800">${stats.collabs}</span>
+                  <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center group-hover:scale-110 smooth-transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                  </div>
+                </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col lg:flex-row gap-8">
+            <div class="flex-[3]">
+              <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Recent Projects</h3>
+                <button class="text-sm font-bold text-brand hover:underline" id="view-all-projects">View All Projects</button>
+              </div>
+              <div class="dashboard-grid">
+                ${filteredProjects.map(p => `
+                  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl hover:-translate-y-2 smooth-transition cursor-pointer group flex flex-col relative" onclick="window.navigate('${p.type}', '${p.id}')">
+                    <div class="h-48 bg-gray-100 relative overflow-hidden">
+                       <img src="${p.cover}" class="w-full h-full object-cover group-hover:scale-110 smooth-transition">
+                       <div class="absolute top-4 left-4 z-10">
+                          <span class="bg-white/90 backdrop-blur-md text-[9px] font-black text-gray-800 px-3 py-1.5 rounded-lg shadow-sm border border-white/20 uppercase tracking-widest">${p.type}</span>
+                       </div>
+                       <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                      <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-gray-800 text-lg group-hover:text-brand smooth-transition">${p.title}</h4>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 py-1 bg-gray-50 rounded">${p.client}</span>
+                      </div>
+                      <p class="text-xs text-gray-400 font-medium mb-6">Last updated ${p.lastUpdated}</p>
+                      
+                      <div class="mt-auto">
+                        <div class="flex justify-between items-center mb-2">
+                           <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Progress</span>
+                           <span class="text-[10px] font-black text-gray-800">${p.progress}%</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div class="h-full bg-brand smooth-transition" style="width: ${p.progress}%"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-gray-800 mb-6">Activity Feed</h3>
+              <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-2 h-[calc(100vh-450px)] overflow-hidden flex flex-col">
+                 <div class="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-hide">
+                    ${window.appData.activity.map(a => `
+                      <div class="flex gap-4 relative group">
+                        <div class="w-px h-full bg-gray-100 absolute left-5 top-10 group-last:hidden"></div>
+                        <img src="https://i.pravatar.cc/100?u=${a.user}" class="w-10 h-10 rounded-2xl shadow-md border-2 border-white z-10 flex-shrink-0">
+                        <div>
+                          <p class="text-sm text-gray-800 font-medium leading-relaxed">
+                            <span class="font-bold">${a.user}</span> ${a.action} <span class="text-brand font-bold">${a.target}</span>
+                          </p>
+                          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 block">${a.time}</span>
+                        </div>
+                      </div>
+                    `).join('')}
+                 </div>
+                 <div class="p-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
+                    <button class="w-full py-3 bg-white hover:bg-gray-100 border border-gray-200 rounded-xl text-[10px] font-black text-gray-500 uppercase tracking-widest smooth-transition">View All Activity</button>
+                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create Modal Mock -->
+        <div id="create-modal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-[100] flex items-center justify-center hidden opacity-0 smooth-transition">
+            <div class="bg-white rounded-[40px] shadow-2xl w-[600px] overflow-hidden transform scale-95 transition-all duration-300" id="create-modal-content">
+                <div class="p-10 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div>
+                        <h2 class="text-3xl font-black text-gray-800 tracking-tight">Create New Project</h2>
+                        <p class="text-gray-500 text-sm mt-1 uppercase tracking-widest font-bold">New Milestone</p>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-600 p-2 hover:bg-white rounded-full smooth-transition" onclick="window.closeCreateModal()"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </div>
+                <div class="p-10 space-y-8">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Project Name</label>
+                            <input type="text" id="new-p-title" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-brand/10 focus:border-brand smooth-transition" placeholder="Enter title...">
+                        </div>
+                        <div class="space-y-2">
+                             <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Client</label>
+                             <select id="new-p-client" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold focus:ring-4 focus:ring-brand/10 focus:border-brand smooth-transition appearance-none">
+                                 <option>Acme Corp</option>
+                                 <option>Globex</option>
+                                 <option>Initech</option>
+                             </select>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Project Type</label>
+                        <div class="grid grid-cols-3 gap-4">
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="p-type" value="moodboard" class="hidden peer" checked>
+                                <div class="p-4 border-2 border-gray-100 rounded-2xl text-center peer-checked:border-brand peer-checked:bg-orange-50 smooth-transition">
+                                    <span class="text-[10px] font-black uppercase text-gray-500 group-hover:text-gray-800">Moodboard</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="p-type" value="kanban" class="hidden peer">
+                                <div class="p-4 border-2 border-gray-100 rounded-2xl text-center peer-checked:border-brand peer-checked:bg-orange-50 smooth-transition">
+                                    <span class="text-[10px] font-black uppercase text-gray-500 group-hover:text-gray-800">Tracker</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="p-type" value="styleframes" class="hidden peer">
+                                <div class="p-4 border-2 border-gray-100 rounded-2xl text-center peer-checked:border-brand peer-checked:bg-orange-50 smooth-transition">
+                                    <span class="text-[10px] font-black uppercase text-gray-500 group-hover:text-gray-800">Frames</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-8 bg-gray-50/50 border-t border-gray-100 flex gap-4">
+                    <button class="flex-1 py-4 bg-gray-200 hover:bg-gray-300 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-600 smooth-transition" onclick="window.closeCreateModal()">Cancel</button>
+                    <button class="flex-[2] py-4 bg-brand hover:bg-brand-dark text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brand/20 smooth-transition" id="save-project-btn">Launch Project</button>
+                </div>
+            </div>
+        </div>
+      `;
+
+      // Handlers
+      document.getElementById('new-project-btn').onclick = window.showCreateModal;
+      document.getElementById('view-all-projects').onclick = () => window.navigate('moodboard');
+      
+      document.getElementById('save-project-btn').onclick = () => {
+        const title = document.getElementById('new-p-title').value.trim();
+        const client = document.getElementById('new-p-client').value;
+        const type = document.querySelector('input[name="p-type"]:checked').value;
+        
+        if (!title) { window.showToast('Project title is required!', 'error'); return; }
+        
+        const newProj = {
+           id: 'p-' + Date.now(),
+           title, client, type,
+           lastUpdated: 'Just now',
+           status: 'In Progress',
+           progress: 0,
+           cover: 'https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=600&auto=format&fit=crop'
+        };
+        
+        window.appData.projects.unshift(newProj);
+        window.appData.activity.unshift({ id: 'a-'+Date.now(), user: 'You', action: 'created', target: title, time: 'Just now' });
+        
+        window.closeCreateModal();
+        window.initDashboard(container, window.mockSocket);
+        window.showToast(`Project "${title}" launched successfully!`);
+      };
+    };
+
+    window.showCreateModal = () => {
+        const modal = document.getElementById('create-modal');
+        const content = document.getElementById('create-modal-content');
+        modal.classList.remove('hidden');
+        setTimeout(() => { modal.classList.add('opacity-100'); content.classList.remove('scale-95'); }, 10);
+    };
+
+    window.closeCreateModal = () => {
+        const modal = document.getElementById('create-modal');
+        const content = document.getElementById('create-modal-content');
+        modal.classList.remove('opacity-100');
+        content.classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    };
+
+    // --- MAIN NAVIGATION ---
+    window.mockSocket = window.io();
+    window.currentRoute = 'dashboard';
+    window.currentProject = null;
+
+    const routes = {
+      dashboard: window.initDashboard,
+      moodboard: window.initMoodboard,
+      kanban: window.initKanban,
+      library: window.initLibrary,
+      styleframes: window.initStyleFrames,
+      motionprojects: window.initMotionProjects,
+      reviews: window.initReviews,
+      trash: window.initTrash
+    };
+
+    window.navigate = function(route, projectId = null) {
+      window.currentRoute = route;
+      window.currentProject = projectId;
+      
+      const app = document.getElementById('app');
+      app.innerHTML = '';
+
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active', 'text-gray-900', 'font-semibold', 'bg-red-50', 'text-red-600');
+        link.classList.add('text-gray-600', 'font-medium');
+        if (link.dataset.route === route) {
+          link.classList.add('active');
+          link.classList.remove('text-gray-600');
+          if(route === 'trash') { link.classList.add('bg-red-50', 'text-red-600'); }
+          else { link.classList.add('text-gray-900', 'font-semibold'); }
+        }
+      });
+
+      if (routes[route]) {
+        routes[route](app, window.mockSocket, projectId);
+      }
+      window.updateBadges();
+    };
+
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.navigate(e.currentTarget.dataset.route);
+      });
+    });
+
+    // Global Client & Role State
+    window.activeClient = 'All';
+    window.activeRole = 'designer';
+
+    window.updateBadges = function() {
+      const tBadge = document.getElementById('nav-trash-badge');
+      const rBadge = document.getElementById('nav-reviews-badge');
+      if(tBadge) {
+        tBadge.textContent = window.appData.trash.length;
+        tBadge.classList.toggle('hidden', window.appData.trash.length === 0);
+      }
+      if(rBadge) {
+        const pending = window.appData.reviews.filter(r => r.status === 'Pending').length;
+        rBadge.textContent = pending;
+        rBadge.classList.toggle('hidden', pending === 0 || window.activeRole === 'client');
+      }
+    };
+
+    const roleBtnDesigner = document.getElementById('role-toggle-designer');
+    const roleBtnClient = document.getElementById('role-toggle-client');
+
+    function updateRoleUI() {
+      if(window.activeRole === 'designer') {
+        roleBtnDesigner.className = 'px-3 py-1 text-xs font-bold rounded-md bg-white text-gray-800 shadow-sm smooth-transition';
+        roleBtnClient.className = 'px-3 py-1 text-xs font-bold rounded-md text-gray-500 hover:text-gray-800 smooth-transition';
+        document.body.classList.remove('role-client');
+      } else {
+        roleBtnClient.className = 'px-3 py-1 text-xs font-bold rounded-md bg-white text-gray-800 shadow-sm smooth-transition';
+        roleBtnDesigner.className = 'px-3 py-1 text-xs font-bold rounded-md text-gray-500 hover:text-gray-800 smooth-transition';
+        document.body.classList.add('role-client');
+      }
+      window.updateBadges();
+      window.navigate(window.currentRoute, window.currentProject);
+    }
+
+    roleBtnDesigner.onclick = () => { window.activeRole = 'designer'; updateRoleUI(); };
+    roleBtnClient.onclick = () => { window.activeRole = 'client'; updateRoleUI(); };
+
+    const clientSelect = document.getElementById('global-client-select');
+    clientSelect.onchange = (e) => {
+      window.activeClient = e.target.value;
+      window.showToast(`Filtering for: ${window.activeClient}`);
+      window.navigate(window.currentRoute, window.currentProject);
+    };
+  </script>
+  <script>
+    // --- LOAD ALL OTHER VIEWS ---
+    window.initMoodboard = function(container, socket, projectId) {
+      const project = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
+      container.innerHTML = `
+        <header class="px-10 py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-between items-center z-10 w-full" id="moodboard-header">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              ${project.title} 
+              <span class="bg-gray-100 text-gray-500 text-[10px] px-3 py-1 rounded-lg font-black uppercase tracking-widest">Moodboard</span>
+            </h1>
+          </div>
+          <div class="flex items-center gap-5">
+            <div class="flex -space-x-2 mr-4" id="board-collaborators">
+              <img class="w-8 h-8 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?img=33">
+            </div>
+            <button id="comment-mode-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg smooth-transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+              <span id="comment-mode-text">Comment Mode: Off</span>
+            </button>
+            <div class="relative group ${window.activeRole === 'client' ? 'hidden' : ''}">
+              <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg smooth-transition flex items-center gap-2" id="add-btn">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Add
+              </button>
+              <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 border border-gray-100 group-hover:block">
+                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-brand hover:text-white" id="add-image">Image / GIF</a>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-brand hover:text-white" id="add-text">Text Note</a>
+              </div>
+            </div>
+            <button id="deliver-btn" class="bg-gray-900 hover:bg-black text-white font-bold py-3 px-8 rounded-2xl smooth-transition flex items-center gap-3 text-sm uppercase tracking-widest shadow-xl">Deliver</button>
+            <button id="share-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg smooth-transition flex items-center gap-2">Share</button>
+          </div>
+        </header>
+        <div id="canvas" class="flex-1 bg-gray-100 relative overflow-hidden" style="background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px;"></div>
+      `;
+
+      const canvas = document.getElementById('canvas');
+      let isCommentMode = false;
+      const commentModeBtn = document.getElementById('comment-mode-btn');
+      const commentModeText = document.getElementById('comment-mode-text');
+
+      commentModeBtn.addEventListener('click', () => {
+        isCommentMode = !isCommentMode;
+        if(isCommentMode) {
+          commentModeBtn.classList.replace('bg-gray-100', 'bg-brand');
+          commentModeBtn.classList.replace('text-gray-700', 'text-white');
+          commentModeText.textContent = "Comment Mode: On";
+          canvas.style.cursor = "crosshair";
+        } else {
+          commentModeBtn.classList.replace('bg-brand', 'bg-gray-100');
+          commentModeBtn.classList.replace('text-white', 'text-gray-700');
+          commentModeText.textContent = "Comment Mode: Off";
+          canvas.style.cursor = "default";
+        }
+      });
+
+      document.getElementById('add-image').onclick = () => {
+        const url = prompt("Image URL:", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600");
+        if(url) addElement({ type: 'image', content: url, x: 100, y: 100, width: 300 });
+      };
+
+      document.getElementById('add-text').onclick = () => {
+        addElement({ type: 'text', content: 'New Note', x: 200, y: 200, width: 200 });
+      };
+
+      function addElement(data) {
+        const el = document.createElement('div');
+        el.className = 'absolute bg-white p-2 shadow-xl rounded-lg group draggable-element';
+        el.style.left = data.x + 'px';
+        el.style.top = data.y + 'px';
+        el.style.width = data.width + 'px';
+        el.style.zIndex = 100;
+        
+        if(data.type === 'image') {
+          el.innerHTML = `<img src="${data.content}" class="w-full h-auto rounded pointer-events-none">`;
+        } else {
+          el.innerHTML = `<textarea class="w-full h-24 p-2 text-sm border-none bg-transparent resize-none">${data.content}</textarea>`;
+        }
+        
+        el.onmousedown = (e) => {
+            if(isCommentMode) return;
+            let ox = e.clientX - el.offsetLeft;
+            let oy = e.clientY - el.offsetTop;
+            document.onmousemove = (e) => {
+                el.style.left = (e.clientX - ox) + 'px';
+                el.style.top = (e.clientY - oy) + 'px';
+            };
+            document.onmouseup = () => document.onmousemove = null;
+        };
+        canvas.appendChild(el);
+      }
+
+      // Initial Elements
+      addElement({ type: 'image', content: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600', x: 100, y: 100, width: 300 });
+      
+      document.getElementById('deliver-btn').onclick = () => window.showToast('Moodboard Delivered!');
+      document.getElementById('share-btn').onclick = () => window.showToast('Link Copied!');
+    };
+
+    window.initKanban = function(container, socket, projectId) {
+      const project = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
+      const tasks = [
+        { id: 't1', title: 'Gather references', col: 'todo', tag: 'Research' },
+        { id: 't2', title: 'Initial layout', col: 'inprogress', tag: 'Design' },
+        { id: 't3', title: 'Export assets', col: 'review', tag: 'Production' }
+      ];
+
+      container.innerHTML = `
+        <div class="view-container">
+          <header class="flex justify-between items-center mb-10">
+            <div>
+              <h1 class="text-4xl font-bold text-gray-900 mb-2">${project.title} Tracker</h1>
+              <p class="text-gray-500">Track production milestones</p>
+            </div>
+          </header>
+          <div class="flex gap-8 overflow-x-auto pb-10 h-full">
+            ${['To Do', 'In Progress', 'Client Review', 'Approved'].map(c => `
+              <div class="w-80 bg-gray-100 rounded-[32px] p-4 flex flex-col gap-4">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-gray-400 px-4">${c}</h3>
+                <div class="flex-1 space-y-4" id="col-${c.replace(/\s/g, '').toLowerCase()}"></div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      tasks.forEach(t => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl smooth-transition cursor-grab';
+        card.innerHTML = `
+          <span class="text-[9px] font-bold px-2 py-0.5 bg-gray-50 text-gray-400 rounded uppercase tracking-wider">${t.tag}</span>
+          <h4 class="font-bold text-gray-800 text-sm mt-2">${t.title}</h4>
+        `;
+        const col = document.getElementById(`col-${t.col}`);
+        if(col) col.appendChild(card);
+      });
+    };
+
+    window.initStyleFrames = function(container, socket, projectId) {
+      const project = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
+      container.innerHTML = `
+        <div class="view-container">
+          <header class="mb-10 flex justify-between items-center">
+            <div>
+              <h1 class="text-3xl font-bold text-gray-900">${project.title} Frames</h1>
+              <p class="text-gray-500">Visual style development and frame reviews</p>
+            </div>
+            <button class="bg-brand text-white font-bold py-2 px-6 rounded-xl">+ Add Frame</button>
+          </header>
+          <div class="fluid-grid" id="frames-grid"></div>
+        </div>
+      `;
+      const grid = document.getElementById('frames-grid');
+      [1,2,3].forEach(i => {
+        const f = document.createElement('div');
+        f.className = 'glass-panel rounded-3xl overflow-hidden shadow-sm hover:shadow-xl smooth-transition';
+        f.innerHTML = `
+          <img src="https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=600" class="w-full h-48 object-cover">
+          <div class="p-6">
+            <h4 class="font-bold">Style Frame ${i}</h4>
+            <div class="flex gap-2 mt-4"><div class="w-6 h-6 rounded bg-orange-500"></div><div class="w-6 h-6 rounded bg-blue-500"></div></div>
+          </div>
+        `;
+        grid.appendChild(f);
+      });
+    };
+
+    window.initMotionProjects = function(container, socket, projectId) {
+      const project = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
+      container.innerHTML = `
+        <div class="view-container">
+          <header class="mb-10">
+            <h1 class="text-3xl font-bold text-gray-900">${project.title} Motion</h1>
+            <p class="text-gray-500">Animation and movement direction</p>
+          </header>
+          <div class="fluid-grid">
+            <div class="bg-black aspect-video rounded-3xl flex items-center justify-center text-white">Video Player Demo</div>
+          </div>
+        </div>
+      `;
+    };
+
+    window.initLibrary = function(container, socket, projectId) {
+      const project = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
+      container.innerHTML = `
+        <div class="view-container">
+          <header class="mb-10">
+            <h1 class="text-3xl font-bold text-gray-900">${project.title} Library</h1>
+            <p class="text-gray-500">Shared assets and source files</p>
+          </header>
+          <div class="fluid-grid">
+            ${[1,2,3,4].map(i => `<div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex flex-col items-center justify-center h-48">Asset ${i}</div>`).join('')}
+          </div>
+        </div>
+      `;
+    };
+
+    window.initReviews = function(container, socket, projectId) {
+      const project = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
+      container.innerHTML = `
+        <div class="view-container">
+          <header class="mb-10">
+            <h1 class="text-3xl font-bold text-gray-900">${project.title} Reviews</h1>
+            <p class="text-gray-500">Pending approvals and feedback</p>
+          </header>
+          <div class="space-y-4">
+            ${window.appData.reviews.map(r => `
+              <div class="bg-white p-6 rounded-3xl border border-gray-100 flex justify-between items-center">
+                <div><h4 class="font-bold">${r.title}</h4><p class="text-sm text-gray-500">${r.status}</p></div>
+                <button class="bg-gray-100 p-2 rounded-xl">View Details</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    };
+
+    window.initTrash = function(container, socket, projectId) {
+      container.innerHTML = `
+        <div class="view-container">
+          <header class="mb-10">
+            <h1 class="text-3xl font-bold text-gray-900">Recycle Bin</h1>
+            <p class="text-gray-500">Deleted items are kept here for 30 days</p>
+          </header>
+          <div class="space-y-4">
+            ${window.appData.trash.map(t => `
+               <div class="bg-white p-6 rounded-3xl border border-gray-100 flex justify-between items-center group">
+                 <div><h4 class="font-bold">${t.title}</h4><p class="text-sm text-gray-500">${t.deletedAt}</p></div>
+                 <button class="text-brand font-bold opacity-0 group-hover:opacity-100 smooth-transition">Restore</button>
+               </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    };
+
+    // --- DATA ---
+    window.appData = {
+      projects: [
+        { id: 'p-1', title: 'Fintech Brand Redesign', client: 'Acme Corp', type: 'moodboard', lastUpdated: '2 hours ago', status: 'In Progress', progress: 45, cover: 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=600' },
+        { id: 'p-2', title: 'Q4 Motion Campaign', client: 'Globex', type: 'motionprojects', lastUpdated: '5 hours ago', status: 'In Review', progress: 85, cover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600' },
+        { id: 'p-3', title: 'UI Toolkit V2', client: 'Initech', type: 'styleframes', lastUpdated: '1 day ago', status: 'Approved', progress: 100, cover: 'https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=600' }
+      ],
+      activity: [
+        { id: 'a-1', user: 'Alex Reyes', action: 'commented on', target: 'Logo Exploration', time: '10 mins ago' },
+        { id: 'a-2', user: 'Jordan Smith', action: 'uploaded', target: 'V2 Mockups', time: '1 hour ago' }
+      ],
+      reviews: [
+        { id: 'r-1', title: 'Main Dashboard UI', status: 'Pending' },
+        { id: 'r-2', title: 'Mobile App Icons', status: 'Pending' }
+      ],
+      trash: [
+        { id: 't-1', title: 'Old Draft 1', deletedAt: 'Yesterday' }
+      ]
+    };
+
+    window.showToast = (msg) => {
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-8 right-8 bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-2xl z-[200] animate-fade-in font-bold text-sm';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
+    };
+
+    // Initialize App
+    window.navigate('dashboard');
+  </script>
+</body>
+</html>
