@@ -38,7 +38,7 @@ window.initScript = function(container, socket, projectId) {
 
   // ─── STREAMING API HELPER ──────────────────────────────────────────────────
   async function streamBackendRoute(url, bodyData, onChunk, onDone, onError) {
-    const fullUrl = url.startsWith('http') ? url : (window.BASE_URL || 'http://localhost:3000').replace(/\/$/, '') + '/' + url.replace(/^\//, '');
+    const fullUrl = url.startsWith('http') ? url : (window.BASE_URL || 'https://boardnify-backend.onrender.com').replace(/\/$/, '') + '/' + url.replace(/^\//, '');
     try {
         const response = await fetch(fullUrl, {
             method: 'POST',

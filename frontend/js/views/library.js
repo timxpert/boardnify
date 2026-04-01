@@ -475,23 +475,48 @@ window.initLibrary = function(container, socket, projectId) {
     inp.accept = 'image/*,video/*';
     inp.onchange = (e) => {
        const file = e.target.files[0];
-       if(file) {
-         if(window.showToast) window.showToast(`Uploading ${file.name}...`);
-         setTimeout(() => {
-           const newAsset = {
-             id: 'lib' + Date.now(),
-             title: file.name,
-             img: file.type.startsWith('video') ? URL.createObjectURL(file) : 'https://images.unsplash.com/photo-1492691523567-6170c8173461?q=80&w=600&auto=format&fit=crop',
-             tags: ['Upload'],
-             type: file.type.startsWith('video') ? 'Video' : 'Image',
-             client: window.activeClient === 'All' ? 'Acme Corp' : window.activeClient
-           };
-           window.globalLibrary.push(newAsset);
-           if(window.dbInsert) window.dbInsert('library', newAsset);
-           renderLibrary();
-           if(window.showToast) window.showToast('Upload complete!');
-         }, 1000);
-       }
+        if(file) {
+          if(window.showToast) window.showToast(`Uploading ${file.name}...`);
+          
+          (async () => {
+            try {
+              const formData = new FormData();
+              formData.append('file', file);
+
+              console.log(`[Library] Uploading to: ${window.BASE_URL}/api/upload`);
+              const response = await fetch(`${window.BASE_URL}/api/upload`, {
+                method: 'POST',
+                body: formData
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Upload failed');
+              }
+
+              const result = await response.json();
+              const publicUrl = result.url;
+              const type = file.type.startsWith('video') ? 'Video' : 'Image';
+
+              const newAsset = {
+                id: 'lib' + Date.now(),
+                title: file.name,
+                img: publicUrl,
+                tags: ['Upload'],
+                type: type,
+                client: window.activeClient === 'All' ? 'Acme Corp' : window.activeClient
+              };
+              
+              window.globalLibrary.unshift(newAsset); // Add to top
+              if(window.dbInsert) window.dbInsert('library', newAsset);
+              renderLibrary();
+              if(window.showToast) window.showToast('Upload complete!', 'success');
+            } catch (err) {
+              console.error('[Library] Upload Error:', err);
+              if(window.showToast) window.showToast(`Upload Error: ${err.message}`, 'error');
+            }
+          })();
+        }
     };
     inp.click();
   };

@@ -8,27 +8,43 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 
+const { createClient } = require('@supabase/supabase-js');
+
 const app = express();
 const server = http.createServer(app);
+
+// Initialize Supabase Client for backend operations
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY // Use service role for admin/backend actions
+);
+
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: ["https://boardnify.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST"]
   }
 });
 
-app.use(cors());
+// Configure CORS specifically for Vercel and local dev
+app.use(cors({
+  origin: ["https://boardnify.vercel.app", "http://localhost:3000"],
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
-// Ensure uploads directory exists
+// Ensure uploads directory exists (backup for ephemeral storage)
 const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
+  console.log(`[Backend] Creating uploads directory: ${uploadDir}`);
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 app.use('/uploads', express.static(uploadDir));
 
-// Multer setup for file uploads
+// Multer setup for temporary file handling
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir)
@@ -38,17 +54,100 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '-' + file.originalname)
   }
 });
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+});
 
-// API Routes
-app.post('/api/upload', upload.single('file'), (req, res) => {
+// --- API ROUTES ---
+
+/**
+ * User Registration Endpoint
+ * Logic: Uses Supabase Auth to create a new user.
+ */
+app.post('/api/register', async (req, res) => {
+  const { email, password } = req.body;
+  console.log(`[Backend] Registration attempt for: ${email}`);
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: 'https://boardnify.vercel.app'
+      }
+    });
+
+    if (error) {
+      console.error(`[Backend] Registration error for ${email}:`, error.message);
+      return res.status(400).json({ error: error.message });
+    }
+
+    console.log(`[Backend] User created successfully: ${email}`);
+    res.status(201).json({ 
+      message: 'Registration successful. Please check your email for confirmation.',
+      user: data.user 
+    });
+  } catch (err) {
+    console.error(`[Backend] Unexpected registration error:`, err);
+    res.status(500).json({ error: 'Internal server error during registration' });
+  }
+});
+
+/**
+ * File Upload Endpoint
+ * Logic: Receives file via multer, uploads to Supabase Storage, and returns public URL.
+ */
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  console.log(`[Backend] Upload attempt started`);
+  
   if (!req.file) {
+    console.error(`[Backend] Upload error: No file provided`);
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  res.json({
-    url: `/uploads/${req.file.filename}`,
-    type: req.file.mimetype
-  });
+
+  const filePath = req.file.path;
+  const fileName = req.file.filename;
+  const bucketName = 'moodboard-assets';
+
+  try {
+    const fileContent = fs.readFileSync(filePath);
+    console.log(`[Backend] Uploading to Supabase bucket: ${bucketName}`);
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(`public/${fileName}`, fileContent, {
+        contentType: req.file.mimetype,
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error(`[Backend] Supabase storage error:`, uploadError.message);
+      throw uploadError;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(`public/${fileName}`);
+
+    console.log(`[Backend] Upload successful. Public URL: ${publicUrlData.publicUrl}`);
+
+    // Clean up local file (ephemeral storage)
+    fs.unlinkSync(filePath);
+
+    res.json({
+      url: publicUrlData.publicUrl,
+      type: req.file.mimetype
+    });
+  } catch (err) {
+    console.error(`[Backend] Final upload error:`, err);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    res.status(500).json({ error: err.message || 'Failed to upload to cloud storage' });
+  }
 });
 
 const requireApiKey = (req, res, next) => {

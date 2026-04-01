@@ -415,32 +415,34 @@ window.initMoodboard = function(container, socket, projectId) {
               console.warn('Session check failed or not available:', e);
           }
       }
-
       const id = 'el-' + Date.now();
       
       // Add Placeholder
       createElNode({ id, type: 'loading', x: nx, y: ny, w: 200, h: 200, z: highestZ++ });
       
       try {
-         const uniqueName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`;
-         const filePath = `${_projectId}/${uniqueName}`;
-
-         const { data, error } = await window.supabaseClient.storage.from('moodboard-assets').upload(filePath, file);
+         const formData = new FormData();
+         formData.append('file', file);
          
-         if(error && error.message && error.message.includes('bucket')) {
-            // Attempt auto-create if bucket is missing
-            await window.supabaseClient.storage.createBucket('moodboard-assets', { public: true });
-            const r2 = await window.supabaseClient.storage.from('moodboard-assets').upload(filePath, file);
-            if(r2.error) throw r2.error;
-         } else if (error) {
-            throw error;
+         const uploadUrl = `${window.BASE_URL}/api/upload`;
+         console.log(`[Frontend] Uploading to: ${uploadUrl}`);
+
+         const response = await fetch(uploadUrl, {
+           method: 'POST',
+           body: formData
+         });
+
+         if (!response.ok) {
+           const errorData = await response.json();
+           throw new Error(errorData.error || 'Upload failed');
          }
 
-         const { data: pUrl } = window.supabaseClient.storage.from('moodboard-assets').getPublicUrl(filePath);
+         const result = await response.json();
+         const publicUrl = result.url;
          
          // Replace placeholder
          if(document.getElementById(id)) document.getElementById(id).remove();
-         const node = { id, type: isVid?'video':'image', x: nx, y: ny, w: 300, h: isVid?200:0, content: pUrl.publicUrl, locked:false, z:highestZ++ };
+         const node = { id, type: isVid?'video':'image', x: nx, y: ny, w: 300, h: isVid?200:0, content: publicUrl, locked:false, z:highestZ++ };
          createElNode(node);
          saveState();
       } catch(err) {
