@@ -13,6 +13,10 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const server = http.createServer(app);
 
+
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL)
+console.log('ENV VARS:', Object.keys(process.env).filter(k => k.includes('SUPA')))
+
 // Initialize Supabase Client for backend operations
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -54,7 +58,7 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '-' + file.originalname)
   }
 });
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
@@ -88,9 +92,9 @@ app.post('/api/register', async (req, res) => {
     }
 
     console.log(`[Backend] User created successfully: ${email}`);
-    res.status(201).json({ 
+    res.status(201).json({
       message: 'Registration successful. Please check your email for confirmation.',
-      user: data.user 
+      user: data.user
     });
   } catch (err) {
     console.error(`[Backend] Unexpected registration error:`, err);
@@ -104,7 +108,7 @@ app.post('/api/register', async (req, res) => {
  */
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   console.log(`[Backend] Upload attempt started`);
-  
+
   if (!req.file) {
     console.error(`[Backend] Upload error: No file provided`);
     return res.status(400).json({ error: 'No file uploaded' });
@@ -194,7 +198,7 @@ const anthropicProxy = (req, res, payload, apiKey, retries = 1) => {
       proxyRes.on('end', () => {
         console.error(`Anthropic ${proxyRes.statusCode} Error:`, errorBody);
         if (!res.headersSent) {
-           res.status(proxyRes.statusCode).json({ error: `Anthropic API Error: ${errorBody}` });
+          res.status(proxyRes.statusCode).json({ error: `Anthropic API Error: ${errorBody}` });
         }
       });
       return;
@@ -217,7 +221,7 @@ app.post('/api/generate-script', requireApiKey, (req, res) => {
   try {
     console.log("Incoming request body:", req.body);
     const { scriptType, targetAudience, description, tone, length, callToAction } = req.body;
-    
+
     const systemPrompt = `You are a world-class creative copywriter specializing in ultra-converting video scripts.
 Your scripts must sound completely human-written with natural speech patterns, conversational rhythm, imperfect sentence structures where appropriate, emotional language, and storytelling flow.
 NEVER use corporate filler phrases, buzzwords, or robotic transitions.
@@ -237,7 +241,7 @@ Output ONLY valid HTML using <h3> for Scene Headings and <p> for speech/action. 
       messages: [{ role: 'user', content: prompt }],
       system: systemPrompt
     };
-    
+
     console.log("Anthropic Payload:", JSON.stringify(payload, null, 2));
 
     anthropicProxy(req, res, payload, process.env.ANTHROPIC_API_KEY);
@@ -277,73 +281,73 @@ Format:
       messages: [{ role: 'user', content: scriptContent }],
       system: systemPrompt
     };
-    
+
     console.log("Anthropic Payload:", JSON.stringify(payload, null, 2));
 
     const makeRequest = (retries = 1) => {
-       const options = {
-         hostname: 'api.anthropic.com',
-         path: '/v1/messages',
-         method: 'POST',
-         headers: {
-           'Content-Type': 'application/json',
-           'x-api-key': process.env.ANTHROPIC_API_KEY,
-           'anthropic-version': '2023-06-01'
-         }
-       };
+      const options = {
+        hostname: 'api.anthropic.com',
+        path: '/v1/messages',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        }
+      };
 
-       const proxyReq = https.request(options, (proxyRes) => {
-         console.log("Anthropic Response Status:", proxyRes.statusCode);
-         
-         let body = '';
-         proxyRes.on('data', chunk => body += chunk);
-         proxyRes.on('end', () => {
-           if (proxyRes.statusCode === 500 && retries > 0) {
-              console.log("Anthropic returned 500, retrying once...");
-              console.log("500 Error Body:", body);
-              return makeRequest(retries - 1);
-           }
+      const proxyReq = https.request(options, (proxyRes) => {
+        console.log("Anthropic Response Status:", proxyRes.statusCode);
 
-           if (proxyRes.statusCode === 401) {
-             console.error("Anthropic 401 Error: API key is invalid or missing");
-             return res.status(401).json({ error: "API key is invalid or missing" });
-           }
+        let body = '';
+        proxyRes.on('data', chunk => body += chunk);
+        proxyRes.on('end', () => {
+          if (proxyRes.statusCode === 500 && retries > 0) {
+            console.log("Anthropic returned 500, retrying once...");
+            console.log("500 Error Body:", body);
+            return makeRequest(retries - 1);
+          }
 
-           if (proxyRes.statusCode === 429) {
-             console.warn("Anthropic 429 Error: Rate limit hit");
-             return res.status(429).json({ error: "Too many requests, please try again in a moment." });
-           }
+          if (proxyRes.statusCode === 401) {
+            console.error("Anthropic 401 Error: API key is invalid or missing");
+            return res.status(401).json({ error: "API key is invalid or missing" });
+          }
 
-           if (proxyRes.statusCode >= 400) {
-             console.error(`Anthropic ${proxyRes.statusCode} Error:`, body);
-             return res.status(proxyRes.statusCode).json({ error: `Anthropic API Error: ${body}` });
-           }
+          if (proxyRes.statusCode === 429) {
+            console.warn("Anthropic 429 Error: Rate limit hit");
+            return res.status(429).json({ error: "Too many requests, please try again in a moment." });
+          }
 
-           try {
-             const responseData = JSON.parse(body);
-             let aiText = responseData.content[0].text;
-             
-             if (aiText.startsWith('\`\`\`json')) {
-                 aiText = aiText.replace(/^\`\`\`json/m, '').replace(/\`\`\`$/m, '').trim();
-             } else if (aiText.startsWith('\`\`\`')) {
-                 aiText = aiText.replace(/^\`\`\`/m, '').replace(/\`\`\`$/m, '').trim();
-             }
-             res.json(JSON.parse(aiText));
-           } catch (err) {
-             console.error("Parse Error:", err, "Raw Output:", body);
-             res.status(500).json({ error: 'Failed to parse AI response' });
-           }
-         });
-       });
+          if (proxyRes.statusCode >= 400) {
+            console.error(`Anthropic ${proxyRes.statusCode} Error:`, body);
+            return res.status(proxyRes.statusCode).json({ error: `Anthropic API Error: ${body}` });
+          }
 
-       proxyReq.on('error', (e) => {
-           console.error("Test Script Proxy Error:", e);
-           res.status(500).json({ error: e.message });
-       });
-       proxyReq.write(JSON.stringify(payload));
-       proxyReq.end();
+          try {
+            const responseData = JSON.parse(body);
+            let aiText = responseData.content[0].text;
+
+            if (aiText.startsWith('\`\`\`json')) {
+              aiText = aiText.replace(/^\`\`\`json/m, '').replace(/\`\`\`$/m, '').trim();
+            } else if (aiText.startsWith('\`\`\`')) {
+              aiText = aiText.replace(/^\`\`\`/m, '').replace(/\`\`\`$/m, '').trim();
+            }
+            res.json(JSON.parse(aiText));
+          } catch (err) {
+            console.error("Parse Error:", err, "Raw Output:", body);
+            res.status(500).json({ error: 'Failed to parse AI response' });
+          }
+        });
+      });
+
+      proxyReq.on('error', (e) => {
+        console.error("Test Script Proxy Error:", e);
+        res.status(500).json({ error: e.message });
+      });
+      proxyReq.write(JSON.stringify(payload));
+      proxyReq.end();
     };
-    
+
     makeRequest();
 
   } catch (error) {
@@ -372,7 +376,7 @@ Do not use markdown backticks or wrappers. ONLY raw HTML output.`;
       messages: [{ role: 'user', content: `Original Script: \n\n${scriptContent}\n\nFeedback: \n\n${JSON.stringify(conversionFeedback)}` }],
       system: systemPrompt
     };
-    
+
     console.log("Anthropic Payload:", JSON.stringify(payload, null, 2));
 
     anthropicProxy(req, res, payload, process.env.ANTHROPIC_API_KEY);
@@ -385,7 +389,7 @@ Do not use markdown backticks or wrappers. ONLY raw HTML output.`;
 // Real-time socket connections
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
-  
+
   socket.on('join-project', (projectId) => {
     socket.join(projectId);
     console.log(`User ${socket.id} joined project ${projectId}`);
