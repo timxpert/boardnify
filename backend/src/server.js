@@ -9,55 +9,40 @@ const fs = require('fs');
 const https = require('https');
 
 const { createClient } = require('@supabase/supabase-js');
+const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
 
+// Use either NEXT_PUBLIC_ or standard variables
+const SUPA_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-console.log('SUPABASE_URL:', process.env.SUPABASE_URL)
-console.log('ENV VARS:', Object.keys(process.env).filter(k => k.includes('SUPA')))
+console.log('SUPABASE_URL Configured:', !!SUPA_URL)
 
 // Initialize Supabase Client for backend operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // Use service role for admin/backend actions
-);
+const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://boardnify.vercel.app", "http://localhost:3000"],
+    origin: true,
     methods: ["GET", "POST"]
   }
 });
 
 // Configure CORS specifically for Vercel and local dev
 app.use(cors({
-  origin: ["https://boardnify.vercel.app", "http://localhost:3000"],
-  methods: ["GET", "POST"],
+  origin: true,
+  methods: ["GET", "POST", "OPTIONS"],
   credentials: true
 }));
 
 app.use(express.json());
+// Static serving is mostly handled by vercel.json but we keep it for localhost parity
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
-// Ensure uploads directory exists (backup for ephemeral storage)
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  console.log(`[Backend] Creating uploads directory: ${uploadDir}`);
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-app.use('/uploads', express.static(uploadDir));
-
-// Multer setup for temporary file handling
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir)
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, uniqueSuffix + '-' + file.originalname)
-  }
-});
+// Multer setup for memory storage (Serverless Vercel compatible)
+const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
@@ -106,52 +91,54 @@ app.post('/api/register', async (req, res) => {
  * File Upload Endpoint
  * Logic: Receives file via multer, uploads to Supabase Storage, and returns public URL.
  */
-app.post('/api/upload', upload.single('file'), async (req, res) => {
-  console.log(`[Backend] Upload attempt started`);
-
-  if (!req.file) {
-    console.error(`[Backend] Upload error: No file provided`);
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
-
-  const filePath = req.file.path;
-  const fileName = req.file.filename;
-  const bucketName = 'moodboard-assets';
-
-  try {
-    const fileContent = fs.readFileSync(filePath);
-    console.log(`[Backend] Uploading to Supabase bucket: ${bucketName}`);
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from(bucketName)
-      .upload(`public/${fileName}`, fileContent, {
-        contentType: req.file.mimetype,
-        upsert: true
-      });
-
-    if (uploadError) {
-      console.error(`[Backend] Supabase storage error:`, uploadError.message);
-      throw uploadError;
+app.post('/api/upload', (req, res) => {
+  upload.single('file')(req, res, async function (err) {
+    if (err) {
+      console.error(`[Backend] Multer error:`, err);
+      return res.status(400).json({ error: err.message || 'File upload error' });
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(`public/${fileName}`);
+    try {
+      console.log(`[Backend] Upload attempt started`);
 
-    console.log(`[Backend] Upload successful. Public URL: ${publicUrlData.publicUrl}`);
+      if (!req.file) {
+        console.error(`[Backend] Upload error: No file provided`);
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
 
-    // Clean up local file (ephemeral storage)
-    fs.unlinkSync(filePath);
+      const fileName = Date.now() + '-' + Math.round(Math.random() * 1E9) + '-' + req.file.originalname;
+      const bucketName = 'moodboard-assets';
+      const fileContent = req.file.buffer;
 
-    res.json({
-      url: publicUrlData.publicUrl,
-      type: req.file.mimetype
-    });
-  } catch (err) {
-    console.error(`[Backend] Final upload error:`, err);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    res.status(500).json({ error: err.message || 'Failed to upload to cloud storage' });
-  }
+      console.log(`[Backend] Uploading to Supabase bucket: ${bucketName}`);
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(`public/${fileName}`, fileContent, {
+          contentType: req.file.mimetype,
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error(`[Backend] Supabase storage error:`, uploadError.message);
+        throw uploadError;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(`public/${fileName}`);
+
+      console.log(`[Backend] Upload successful. Public URL: ${publicUrlData.publicUrl}`);
+
+      res.json({
+        url: publicUrlData.publicUrl,
+        type: req.file.mimetype
+      });
+    } catch (error) {
+      console.error(`[Backend] Final upload error:`, error);
+      res.status(500).json({ error: error.message || 'Failed to upload to cloud storage' });
+    }
+  });
 });
 
 const requireApiKey = (req, res, next) => {
@@ -386,6 +373,159 @@ Do not use markdown backticks or wrappers. ONLY raw HTML output.`;
   }
 });
 
+/**
+ * Invite Client Endpoint
+ * Logic: Inserts invite row and sends magic link email
+ */
+app.post('/api/invite-client', async (req, res) => {
+  const { email, projectTitle, projectDesc, designerId } = req.body;
+  if (!email || !projectTitle) {
+    return res.status(400).json({ error: 'Email and projectTitle are required' });
+  }
+
+  try {
+    // 1. Insert into client_invites table
+    const { data: inviteData, error: insertError } = await supabase
+      .from('client_invites')
+      .insert([
+        {
+          designer_id: designerId || null,
+          client_email: email,
+          project_title: projectTitle,
+          project_desc: projectDesc || '',
+          status: 'pending'
+        }
+      ])
+      .select('id')
+      .single();
+
+    if (insertError) {
+      console.error('[Backend] Invite insertion error:', insertError);
+      return res.status(500).json({ error: 'Failed to create invite record' });
+    }
+
+    const inviteId = inviteData.id;
+
+    // 2. Send Magic Link
+    const baseUrl = req.headers.origin || 'http://localhost:3000';
+    const redirectToUrl = `${baseUrl}/client-accept.html?invite_id=${inviteId}`;
+
+    const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(email, {
+      redirectTo: redirectToUrl
+    });
+
+    if (authError) {
+      console.error('[Backend] Invite auth error:', authError);
+      // Suppress error if user already exists or handle it gracefully
+      return res.status(500).json({ error: authError.message });
+    }
+
+    res.json({ success: true, invite_id: inviteId });
+
+  } catch (err) {
+    console.error('[Backend] Unknown error during invite:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Link Preview Metadata Scraper
+ * Fetches OpenGraph data (title, image, description, favicon) from a URL.
+ */
+app.get('/api/proxy/metadata', (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'URL is required' });
+
+  try {
+    const targetUrl = new URL(url);
+    const client = targetUrl.protocol === 'https:' ? https : http;
+    
+    // Set headers to look like a real browser
+    const options = {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+      },
+      timeout: 5000 // 5 seconds timeout
+    };
+
+    const request = client.get(url, options, (proxyRes) => {
+      // Handle redirects (basic)
+      if (proxyRes.statusCode === 301 || proxyRes.statusCode === 302) {
+         request.destroy();
+         return res.status(500).json({ error: 'Redirects not fully supported in simple proxy' });
+      }
+
+      if (proxyRes.statusCode >= 400) {
+        request.destroy();
+        return res.status(proxyRes.statusCode).json({ error: `Site returned ${proxyRes.statusCode}` });
+      }
+
+      let data = '';
+      proxyRes.on('data', chunk => {
+        data += chunk;
+        if (data.length > 500000) request.destroy(); // Don't download more than 500KB
+      });
+
+      proxyRes.on('end', () => {
+        // Robust regex for title, description, and image
+        const titleMatch = data.match(/<title[^>]*>(.*?)<\/title>/i);
+        const ogTitleMatch = data.match(/<meta[^>]+property=["']og:title["'][^>]+content=["'](.*?)["']/i) || 
+                           data.match(/<meta[^>]+content=["'](.*?)["'][^>]+property=["']og:title["']/i);
+        
+        const ogImageMatch = data.match(/<meta[^>]+property=["']og:image["'][^>]+content=["'](.*?)["']/i) ||
+                            data.match(/<meta[^>]+content=["'](.*?)["'][^>]+property=["']og:image["']/i);
+        
+        const descMatch = data.match(/<meta[^>]+name=["']description["'][^>]+content=["'](.*?)["']/i) ||
+                         data.match(/<meta[^>]+content=["'](.*?)["'][^>]+name=["']description["']/i) ||
+                         data.match(/<meta[^>]+property=["']og:description["'][^>]+content=["'](.*?)["']/i);
+
+        const title = ogTitleMatch?.[1] || titleMatch?.[1] || targetUrl.hostname;
+        const ogImage = ogImageMatch?.[1] || '';
+        const description = descMatch?.[1] || '';
+        const favicon = `https://www.google.com/s2/favicons?domain=${targetUrl.hostname}`;
+
+        res.json({
+          title: title.trim(),
+          image: ogImage,
+          description: description.trim(),
+          favicon: favicon,
+          domain: targetUrl.hostname
+        });
+      });
+    });
+
+    request.on('error', (err) => {
+      res.status(500).json({ error: 'Failed to fetch metadata', details: err.message });
+    });
+
+  } catch (err) {
+    res.status(400).json({ error: 'Invalid URL' });
+  }
+});
+
+
+
+/**
+ * Pinterest OAuth Initialization
+ */
+app.get('/api/auth/pinterest', (req, res) => {
+  const client_id = process.env.PINTEREST_CLIENT_ID;
+  const redirect_uri = `${req.headers.origin || 'https://boardnify.vercel.app'}/api/auth/pinterest/callback`;
+  const scope = 'read_public,read_user_boards';
+  const url = `https://www.pinterest.com/oauth/?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`;
+  res.redirect(url);
+});
+
+/**
+ * Dribbble OAuth Initialization
+ */
+app.get('/api/auth/dribbble', (req, res) => {
+  const client_id = process.env.DRIBBBLE_CLIENT_ID;
+  const redirect_uri = `${req.headers.origin || 'https://boardnify.vercel.app'}/api/auth/dribbble/callback`;
+  const url = `https://dribbble.com/oauth/authorize?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=public+write+comment+upload`;
+  res.redirect(url);
+});
+
 // Real-time socket connections
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -413,6 +553,13 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+
+// Export for Vercel Serverless environment
+module.exports = app;
+
+// Only listen if not running in Vercel
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+  });
+}

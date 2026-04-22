@@ -1,5 +1,7 @@
 window.initMotionProjects = function(container, socket, projectId) {
   const project = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
+  if (!project) return;
+  const isRealUUID = (id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   
   if (!project.data?.motionProjects) {
     project.data = project.data || {};
@@ -24,7 +26,10 @@ window.initMotionProjects = function(container, socket, projectId) {
   const saveMotionState = () => {
     project.data = project.data || {};
     project.data.motionProjects = window.globalMotionProjects;
-    if(window.dbUpdate) window.dbUpdate('projects', projectId, { data: project.data });
+    
+    const _pId = projectId || window.currentProject || window.appData.projects[0]?.id;
+    if (!_pId || _pId === 'null') return;
+    if(window.dbUpdate && _pId) window.dbUpdate('projects', _pId, { data: project.data });
   };
   
   const pushToHistory = (actionLabel, undoFn, redoFn) => {
@@ -38,32 +43,99 @@ window.initMotionProjects = function(container, socket, projectId) {
   let currentFilter = { aspect: 'All', fps: 'All' };
   let currentActiveVId = null;
 
+  // --- GLOBALS FOR UPLOADS & PREVIEWS ---
+  window.openDocPreview = (url, title) => {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-fade-in p-10';
+    modal.innerHTML = `
+      <div class="bg-white rounded-3xl w-full h-full max-w-6xl shadow-2xl flex flex-col overflow-hidden">
+        <header class="h-16 px-8 flex items-center justify-between border-b border-border-light bg-gray-50/50">
+          <h3 class="text-sm font-bold text-text-dark uppercase tracking-widest">${title || 'Document Preview'}</h3>
+          <button onclick="this.closest('.fixed').remove()" class="p-2 text-gray-400 hover:text-text-dark transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </header>
+        <div class="flex-1 bg-gray-200">
+          <iframe src="${url}" class="w-full h-full border-none"></iframe>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.handleMPUpload = async (projectId, vId, onComplete) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'video/*,.pdf,.doc,.docx,.txt';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (window.showToast) window.showToast('Uploading to secure vault...', 'info');
+      
+      try {
+        const bucket = 'assets'; // Defaulting to 'assets' bucket
+        const fileName = `${projectId}/${vId}-${Date.now()}-${file.name}`;
+        const filePath = `motion/${fileName}`;
+
+        // Verify bucket existence (check assets first, then fallback)
+        let { error: bucketErr } = await window.supabaseClient.storage.getBucket(bucket);
+        let activeBucket = bucket;
+        if (bucketErr) {
+            console.warn('Bucket "assets" not found, falling back to "thumbnails"');
+            activeBucket = 'thumbnails';
+        }
+
+        const { data, error } = await window.supabaseClient.storage.from(activeBucket).upload(filePath, file);
+        if (error) throw error;
+
+        const { data: { publicUrl } } = window.supabaseClient.storage.from(activeBucket).getPublicUrl(filePath);
+        
+        const isVideo = file.type.startsWith('video/');
+        const isDoc = !isVideo;
+
+        onComplete({
+          url: publicUrl,
+          name: file.name,
+          type: isVideo ? 'video' : 'document',
+          contentType: file.type
+        });
+        
+        if (window.showToast) window.showToast('Upload complete!', 'success');
+      } catch (err) {
+        console.error(err);
+        if (window.showToast) window.showToast(`Upload failed: ${err.message}`, 'error');
+      }
+    };
+    input.click();
+  };
+
   // --- HTML LAYOUTS ---
   const gridLayout = `
-    <div class="h-full overflow-y-auto bg-[#F7F8FA]">
+    <div class="h-full overflow-y-auto bg-bg-canvas">
       <div class="max-w-7xl mx-auto p-10">
         <header class="flex flex-col md:flex-row md:justify-between md:items-center mb-10 gap-4">
           <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-1">${project.title} Motion</h1>
-            <p class="text-sm text-gray-500">Manage and review motion video deliverables entirely in one place.</p>
+            <h1 class="text-3xl font-bold text-text-dark mb-1">Motion</h1>
+            <p class="text-sm text-text-muted">Manage and review motion video deliverables for this project.</p>
           </div>
           <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 bg-white rounded-xl p-1.5 shadow-sm border border-gray-200">
-               <select id="filter-aspect" class="bg-transparent text-[11px] font-bold uppercase tracking-widest text-gray-600 border-none focus:ring-0 cursor-pointer px-3 py-1.5 outline-none hover:text-gray-900 transition-colors">
+            <div class="flex items-center gap-2 bg-white rounded-lg p-1 shadow-subtle border border-border-light">
+               <select id="filter-aspect" class="bg-transparent text-[10px] font-bold uppercase tracking-widest text-text-muted border-none focus:ring-0 cursor-pointer px-3 py-1.5 outline-none hover:text-text-dark transition-colors">
                   <option value="All">ALL ASPECTS</option>
                   <option value="16:9">16:9</option>
                   <option value="9:16">9:16</option>
                   <option value="1:1">1:1</option>
                </select>
-               <div class="w-px h-4 bg-gray-200"></div>
-               <select id="filter-fps" class="bg-transparent text-[11px] font-bold uppercase tracking-widest text-gray-600 border-none focus:ring-0 cursor-pointer px-3 py-1.5 outline-none hover:text-gray-900 transition-colors">
+               <div class="w-px h-4 bg-border-light mx-1"></div>
+               <select id="filter-fps" class="bg-transparent text-[10px] font-bold uppercase tracking-widest text-text-muted border-none focus:ring-0 cursor-pointer px-3 py-1.5 outline-none hover:text-text-dark transition-colors">
                   <option value="All">ALL FPS</option>
                   <option value="24">24 FPS</option>
                   <option value="30">30 FPS</option>
                   <option value="60">60 FPS</option>
                </select>
             </div>
-            <button id="mp-new-proj-btn" class="bg-[#FF6B2B] hover:bg-[#e65c20] text-white font-bold py-2.5 px-6 rounded-xl smooth-transition shadow-lg hover:shadow-xl shadow-[#FF6B2B]/20 flex items-center gap-2 text-xs uppercase tracking-widest ${window.activeRole === 'client' ? 'hidden' : ''}">
+            <button id="mp-new-proj-btn" class="bg-brand hover:bg-opacity-90 text-white font-bold py-2.5 px-6 rounded-lg smooth-transition shadow-sm flex items-center gap-2 text-xs uppercase tracking-widest ${window.activeRole === 'client' ? 'hidden' : ''}">
               + New Project
             </button>
           </div>
@@ -88,11 +160,11 @@ window.initMotionProjects = function(container, socket, projectId) {
           <div class="grid grid-cols-2 gap-4">
              <div>
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Project Title</label>
-                <input type="text" id="mp-new-title" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] smooth-transition" placeholder="e.g. Q3 Explainer Video">
+                <input type="text" id="mp-new-title" class="w-full p-3 bg-bg-canvas border border-border-light rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-brand smooth-transition" placeholder="e.g. Q3 Explainer Video">
              </div>
              <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Client</label>
-                <select id="mp-new-client" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] smooth-transition">
+                <label class="block text-xs font-bold text-text-muted uppercase tracking-widest mb-2">Client</label>
+                <select id="mp-new-client" class="w-full p-3 bg-bg-canvas border border-border-light rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-brand smooth-transition font-bold text-text-dark">
                    <option value="Acme Corp">Acme Corp</option>
                    <option value="Globex">Globex</option>
                    <option value="Initech">Initech</option>
@@ -102,16 +174,16 @@ window.initMotionProjects = function(container, socket, projectId) {
 
           <div class="grid grid-cols-2 gap-4">
              <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Aspect Ratio</label>
-                <select id="mp-new-aspect" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] smooth-transition font-medium">
+                <label class="block text-xs font-bold text-text-muted uppercase tracking-widest mb-2">Aspect Ratio</label>
+                <select id="mp-new-aspect" class="w-full p-3 bg-bg-canvas border border-border-light rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-brand smooth-transition font-bold text-text-dark">
                    <option value="16:9">16:9 (Widescreen)</option>
                    <option value="9:16">9:16 (Vertical/Social)</option>
                    <option value="1:1">1:1 (Square)</option>
                 </select>
              </div>
              <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Frame Rate (FPS)</label>
-                <select id="mp-new-fps" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] smooth-transition font-medium">
+                <label class="block text-xs font-bold text-text-muted uppercase tracking-widest mb-2">Frame Rate (FPS)</label>
+                <select id="mp-new-fps" class="w-full p-3 bg-bg-canvas border border-border-light rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-brand smooth-transition font-bold text-text-dark">
                    <option value="24">24 FPS (Cinematic)</option>
                    <option value="30">30 FPS (Standard)</option>
                    <option value="60">60 FPS (Smooth)</option>
@@ -120,14 +192,14 @@ window.initMotionProjects = function(container, socket, projectId) {
           </div>
 
           <div>
-             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Video Delivery Link (YT/Vimeo/Drive)</label>
-             <input type="text" id="mp-new-link" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] smooth-transition font-mono text-sm" placeholder="https://vimeo.com/...">
+             <label class="block text-xs font-bold text-text-muted uppercase tracking-widest mb-2">Video Delivery Link (YT/Vimeo/Drive)</label>
+             <input type="text" id="mp-new-link" class="w-full p-3 bg-bg-canvas border border-border-light rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-brand smooth-transition font-mono text-sm" placeholder="https://vimeo.com/...">
              <span id="mp-err-link" class="text-[10px] text-red-500 font-bold uppercase mt-1 hidden tracking-wider">Invalid Video URL Provided</span>
           </div>
         </div>
-        <div class="p-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3 px-8">
-          <button id="mp-cancel-modal" class="px-6 py-2.5 text-gray-600 font-bold text-xs uppercase tracking-widest hover:bg-gray-200 rounded-xl smooth-transition">Cancel</button>
-          <button id="mp-create-modal" class="bg-[#FF6B2B] hover:bg-[#e65c20] text-white font-bold text-xs uppercase tracking-widest py-2.5 px-8 rounded-xl shadow-lg shadow-[#FF6B2B]/20 smooth-transition">Create Project</button>
+        <div class="p-6 bg-gray-50 border-t border-border-light flex justify-end gap-3 px-8">
+          <button id="mp-cancel-modal" class="px-6 py-2 pb-2 text-text-muted font-bold text-xs uppercase tracking-widest hover:text-text-dark rounded-lg smooth-transition">Cancel</button>
+          <button id="mp-create-modal" class="bg-brand hover:opacity-90 text-white font-bold text-xs uppercase tracking-widest py-2.5 px-8 rounded-lg shadow-sm smooth-transition">Create Project</button>
         </div>
       </div>
     </div>
@@ -159,13 +231,13 @@ window.initMotionProjects = function(container, socket, projectId) {
         if(currentFilter.fps !== 'All' && proj.fps !== currentFilter.fps) return;
 
         const card = document.createElement('div');
-        // Card wrapper styling: Max width 380px, 12px rounded corners, subtle shadow, lift on hover
-        card.className = 'bg-[#FFFFFF] rounded-[12px] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group flex flex-col relative max-w-[380px] w-full mx-auto border border-gray-100';
+        // Card wrapper styling: Standard minimalist look
+        card.className = 'bg-white rounded-lg border border-border-light hover:shadow-subtle hover:border-brand/40 transition-all duration-300 cursor-pointer group flex flex-col relative overflow-hidden';
         
         const latestV = proj.versions[proj.versions.length - 1];
-        let statusBg = 'bg-yellow-400 text-yellow-900';
-        if(proj.status.toUpperCase() === 'DELIVERED') statusBg = 'bg-green-400 text-green-900';
-        if(proj.status.toUpperCase() === 'IN REVIEW') statusBg = 'bg-blue-400 text-blue-900';
+        let statusBadge = 'badge-yellow';
+        if(proj.status.toUpperCase() === 'DELIVERED') statusBadge = 'badge-green';
+        if(proj.status.toUpperCase() === 'IN REVIEW') statusBadge = 'badge-purple';
         
         card.innerHTML = `
           <!-- Delete/Duplicate Context Actions (Hidden for client) -->
@@ -174,40 +246,41 @@ window.initMotionProjects = function(container, socket, projectId) {
              <button class="p-2 bg-white/90 backdrop-blur rounded-[8px] text-gray-500 hover:text-red-500 shadow-sm hover:bg-white" onclick="event.stopPropagation(); window.deleteMotionProj('${proj.id}')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
           </div>
           
-          <!-- Thumbnail (16:9 Aspect Ratio) -->
-          <div class="w-full aspect-video bg-gray-900 relative flex items-center justify-center overflow-hidden rounded-t-[12px]">
-            <img src="https://images.unsplash.com/photo-1492691523567-6170c8173461?q=80&w=600&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500 transform">
-            <div class="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent pointer-events-none"></div>
+          <div class="w-full aspect-video bg-black relative flex items-center justify-center overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1492691523567-6170c8173461?q=80&w=600&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700">
+            <div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
             
             <!-- Play Button Overlay -->
-            <div class="z-20 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 group-hover:scale-110 group-hover:bg-brand/80 group-hover:border-brand transition-all shadow-xl">
-               <svg class="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <div class="z-20 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 group-hover:scale-110 group-hover:bg-brand group-hover:border-brand transition-all">
+               <svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </div>
             
             <!-- Badges -->
-            <div class="absolute top-3 left-3 z-20 ${statusBg} text-[9px] font-black px-2 py-1 rounded-[6px] shadow-sm tracking-widest uppercase">${proj.status}</div>
-            <div class="absolute bottom-3 left-3 z-20 flex gap-1.5 opacity-90">
-              <span class="bg-black/50 backdrop-blur text-white border border-white/20 text-[9px] font-bold px-2 py-0.5 rounded-[4px] tracking-widest uppercase">${proj.aspectRatio}</span>
-              <span class="bg-black/50 backdrop-blur text-white border border-white/20 text-[9px] font-bold px-2 py-0.5 rounded-[4px] tracking-widest uppercase">${proj.fps} FPS</span>
+            <div class="absolute top-2 left-2 z-20">
+               <span class="badge ${statusBadge}">${proj.status}</span>
+            </div>
+            <div class="absolute bottom-2 left-2 z-20 flex gap-1 justify-start">
+              <span class="bg-black/40 backdrop-blur text-white text-[8px] font-bold px-1.5 py-0.5 rounded tracking-widest uppercase">${proj.aspectRatio}</span>
+              <span class="bg-black/40 backdrop-blur text-white text-[8px] font-bold px-1.5 py-0.5 rounded tracking-widest uppercase">${proj.fps} FPS</span>
             </div>
           </div>
           
           <!-- Card Details -->
-          <div class="p-5 flex-1 flex flex-col">
-            <h3 class="font-bold text-gray-900 text-lg group-hover:text-brand transition-colors mb-0.5 leading-tight">${proj.title}</h3>
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">${proj.client}</p>
+          <div class="p-4 flex-1 flex flex-col">
+            <h3 class="font-bold text-text-dark text-[15px] group-hover:text-brand transition-colors mb-0.5 leading-tight">${proj.title}</h3>
+            <p class="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-4">${proj.client}</p>
             
-            <div class="flex items-center justify-between text-xs text-gray-500 mt-auto mb-4">
-               <span>Latest: <span class="font-bold text-gray-700">${latestV.vId}</span></span>
+            <div class="flex items-center justify-between text-[11px] text-text-muted mt-auto mb-4 font-medium">
+               <span>Latest: <span class="font-bold text-text-dark">${latestV.vId}</span></span>
                <span>${new Date().toLocaleDateString()}</span>
             </div>
             
-            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div class="flex items-center justify-between pt-4 border-t border-border-light">
                <div class="flex -space-x-1.5">
-                  <img src="https://i.pravatar.cc/100?img=11" class="w-6 h-6 rounded-full border-2 border-white bg-gray-200">
-                  <img src="https://i.pravatar.cc/100?img=12" class="w-6 h-6 rounded-full border-2 border-white bg-gray-200">
+                  <div class="w-6 h-6 rounded-full border-2 border-white bg-bg-canvas flex items-center justify-center text-[8px] font-bold">A</div>
+                  <div class="w-6 h-6 rounded-full border-2 border-white bg-bg-canvas flex items-center justify-center text-[8px] font-bold text-brand">B</div>
                </div>
-               <span class="text-[10px] font-bold text-gray-400 group-hover:text-brand uppercase tracking-widest flex items-center gap-1.5 transition-colors">
+               <span class="text-[9px] font-bold text-text-muted group-hover:text-brand uppercase tracking-widest flex items-center gap-1.5 transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                   ${proj.comments} NOTES
                </span>
@@ -303,30 +376,24 @@ window.initMotionProjects = function(container, socket, projectId) {
      const activeVersion = proj.versions.find(v => v.vId === currentActiveVId);
 
      container.innerHTML = `
-        <div class="h-full flex flex-col bg-[#F7F8FA]">
-          <header class="px-8 py-5 bg-white border-b border-gray-200 flex items-center justify-between shadow-sm z-10 shrink-0">
-             <div class="flex items-center gap-5">
-                <button id="mp-back-btn" class="p-2 -ml-2 text-gray-400 hover:text-brand rounded-full hover:bg-gray-50 smooth-transition">
-                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <div class="h-full flex flex-col bg-bg-canvas">
+          <header class="h-16 px-8 bg-white border-b border-border-light flex items-center justify-between z-10 shrink-0">
+             <div class="flex items-center gap-4">
+                <button id="mp-back-btn" class="p-2 -ml-2 text-text-muted hover:text-brand rounded-lg hover:bg-bg-canvas smooth-transition">
+                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 </button>
-                <div class="w-px h-6 bg-gray-200"></div>
+                <div class="w-px h-6 bg-border-light"></div>
                 <div>
-                   <h1 class="text-xl font-bold text-gray-900">${proj.title}</h1>
-                   <div class="flex items-center gap-2 mt-1 opacity-70">
-                      <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">${proj.client}</span>
-                      <span class="w-1 h-1 rounded-full bg-gray-300"></span>
-                      <span class="text-[10px] font-bold text-brand uppercase tracking-widest">${proj.aspectRatio}</span>
-                      <span class="w-1 h-1 rounded-full bg-gray-300"></span>
-                      <span class="text-[10px] font-bold text-brand uppercase tracking-widest">${proj.fps} FPS</span>
+                   <h1 class="text-lg font-bold text-text-dark leading-none">${proj.title}</h1>
+                   <div class="flex items-center gap-2 mt-1.5">
+                      <span class="text-[9px] font-bold text-text-muted uppercase tracking-wider">${proj.client}</span>
+                      <span class="w-1 h-1 rounded-full bg-border-light"></span>
+                      <span class="text-[9px] font-bold text-brand uppercase tracking-wider">${proj.aspectRatio} • ${proj.fps} FPS</span>
                    </div>
                 </div>
              </div>
-             <div class="flex gap-4">
-                <button onclick="window.showWhatsAppModal('${projectId}', '${project.title.replace(/'/g, "\\'")}', '${project.client || ''}')" class="bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 flex items-center gap-2 ${window.activeRole === 'client' ? 'hidden' : ''}">
-                  <svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.646.685 5.148 1.956 7.394L.548 24l4.72-1.414A11.966 11.966 0 0012.031 24c6.646 0 12.031-5.385 12.031-12.032C24.062 5.385 18.677 0 12.031 0zm0 22.012c-2.217 0-4.341-.58-6.22-1.68l-.446-.265-3.513 1.053 1.074-3.418-.29-.462A9.973 9.973 0 012.019 12.03c0-5.526 4.493-10.02 10.012-10.02 5.52 0 10.012 4.494 10.012 10.02 0 5.526-4.492 10.02-10.012 10.02zm5.503-7.525c-.302-.151-1.789-.884-2.065-.986-.276-.102-.478-.151-.679.151-.201.302-.78 .986-.956 1.188-.176.202-.352.227-.654.076-.302-.151-1.277-.47-2.433-1.498-.901-.801-1.508-1.79-1.684-2.092-.176-.302-.019-.465.132-.616.136-.136.302-.352.453-.528.151-.176.201-.302.302-.503.1-.202.05-.378-.025-.529-.076-.151-.68-1.638-.931-2.242-.244-.589-.492-.51-.68-.519-.175-.01-.377-.01-.578-.01-.201 0-.528.075-.806.377-.276.302-1.056 1.033-1.056 2.518s1.082 2.919 1.233 3.12c.151.201 2.126 3.245 5.148 4.549.719.31 1.28.495 1.719.633.722.228 1.38.196 1.898.119.58-.086 1.789-.731 2.04-1.437.252-.707.252-1.31.177-1.437-.076-.127-.277-.202-.579-.353z"/></svg>
-                  Notify Client
-                </button>
-                <button id="deliver-version-btn" class="bg-[#111111] hover:bg-black text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 ${window.activeRole === 'client' ? 'hidden' : ''}">
+             <div class="flex gap-3">
+                <button id="deliver-version-btn" class="bg-brand hover:opacity-90 text-white px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-widest shadow-sm transition-all flex items-center gap-2 ${window.activeRole === 'client' ? 'hidden' : ''}">
                   Deliver ${activeVersion.vId}
                 </button>
              </div>
@@ -335,62 +402,77 @@ window.initMotionProjects = function(container, socket, projectId) {
           <div class="p-8 flex-1 overflow-y-auto">
              <div class="max-w-5xl mx-auto flex flex-col">
                 
-                <div class="flex gap-3 mb-8">
+                <div class="flex gap-2 mb-8 border-b border-border-light">
                   ${proj.versions.map(v => `
                     <button onclick="window.setActiveVersion('${v.vId}')" 
-                            class="px-5 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs smooth-transition border cursor-pointer
-                            ${v.vId === currentActiveVId ? 'bg-gray-900 text-white shadow-xl border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-900 hover:text-gray-900 shadow-sm'}">
-                      Version ${v.vId.replace('v', '')}
+                            class="px-4 py-3 font-bold uppercase tracking-widest text-[11px] smooth-transition border-b-2
+                            ${v.vId === currentActiveVId ? 'border-brand text-brand' : 'border-transparent text-text-muted hover:text-text-dark'}">
+                      V${v.vId.replace('v', '')}
                     </button>
                   `).join('')}
                   
-                  <button id="mp-add-version-btn" class="px-5 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs smooth-transition bg-[#FF6B2B]/5 text-[#FF6B2B] border border-dashed border-[#FF6B2B]/40 hover:bg-[#FF6B2B] hover:text-white ${window.activeRole === 'client' ? 'hidden' : ''}">
-                    + Add Version
+                  <button id="mp-add-version-btn" class="px-4 py-3 font-bold uppercase tracking-widest text-[11px] text-brand hover:opacity-80 border-b-2 border-transparent ${window.activeRole === 'client' ? 'hidden' : ''}">
+                    + Link Embed
+                  </button>
+                  <button id="mp-upload-version-btn" class="px-4 py-3 font-bold uppercase tracking-widest text-[11px] text-brand hover:opacity-80 border-b-2 border-transparent ${window.activeRole === 'client' ? 'hidden' : ''}">
+                    + Upload File
                   </button>
                 </div>
 
-                <div class="bg-white rounded-[20px] shadow-sm overflow-hidden border border-gray-200 animate-fade-in flex flex-col relative">
-                   <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center px-6">
-                      <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">STATUS: ${activeVersion.status}</span>
-                      ${activeVersion.dlUrl ? `<button onclick="window.open('${activeVersion.dlUrl}', '_blank')" class="text-[10px] font-bold text-brand uppercase tracking-widest hover:underline flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Download MP4</button>` : ''}
+                <div class="bg-white rounded-xl shadow-subtle overflow-hidden border border-border-light flex flex-col relative">
+                   <div class="p-3 bg-gray-50 border-b border-border-light flex justify-between items-center px-6">
+                      <span class="text-[9px] font-bold uppercase tracking-widest text-text-muted">STATUS: ${activeVersion.status}</span>
+                      ${activeVersion.dlUrl ? `<button onclick="window.open('${activeVersion.dlUrl}', '_blank')" class="text-[9px] font-bold text-brand uppercase tracking-widest hover:opacity-80 flex items-center gap-1"><svg class="w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Download</button>` : ''}
                    </div>
-                   <!-- Video Player Embed -->
-                   <div class="aspect-video bg-black relative">
-                      <iframe src="${activeVersion.embedUrl}" class="absolute inset-0 w-full h-full" border="0" allowfullscreen></iframe>
+                   <!-- Video/Doc/Embed Content Area -->
+                   <div class="aspect-video bg-black relative flex items-center justify-center">
+                      ${activeVersion.type === 'document' ? `
+                         <div class="flex flex-col items-center gap-6">
+                            <div class="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center text-brand">
+                               <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div class="text-center">
+                               <h3 class="text-white font-bold mb-1">${activeVersion.file_name || 'Document Version'}</h3>
+                               <p class="text-gray-500 text-[10px] uppercase font-black tracking-widest">In-App Preview Ready</p>
+                            </div>
+                            <button onclick="window.openDocPreview('${activeVersion.fileUrl || activeVersion.embedUrl}', '${activeVersion.file_name || 'Document View'}')" class="px-8 py-3 bg-white text-black font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-gray-200 transition-all">Preview Document</button>
+                         </div>
+                      ` : (activeVersion.fileUrl && activeVersion.fileUrl.match(/\.(mp4|mov|webm)$|video/i)) ? `
+                         <video src="${activeVersion.fileUrl}" controls class="absolute inset-0 w-full h-full object-contain"></video>
+                      ` : `
+                         <iframe src="${activeVersion.embedUrl}" class="absolute inset-0 w-full h-full" border="0" allowfullscreen></iframe>
+                      `}
                    </div>
                    
                    <!-- Feedback Section -->
-                   <div class="p-8 pb-10">
-                      <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">Visual Notes & Feedback for ${activeVersion.vId}</h4>
+                   <div class="p-8">
+                      <h4 class="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-6">Feedback for ${activeVersion.vId}</h4>
                       
                       <!-- Thread List -->
                       <div class="space-y-4" id="mp-thread-${activeVersion.vId}">
                          ${(activeVersion.thread || []).map(comment => `
                             <div class="flex gap-4 items-start animate-slide-up">
-                               <div class="w-10 h-10 rounded-2xl bg-gray-900 text-white flex items-center justify-center font-bold text-sm shadow-md border border-gray-700">${comment.user.charAt(0)}</div>
-                               <div class="flex-1 bg-gray-50 p-5 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm">
-                                  <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 px-1">${comment.user} <span class="text-gray-300 px-1">•</span> ${comment.time}</p>
+                               <div class="w-8 h-8 rounded-full bg-text-dark text-white flex items-center justify-center font-bold text-xs">${comment.user.charAt(0)}</div>
+                               <div class="flex-1 bg-bg-canvas p-4 rounded-lg border border-border-light">
+                                  <p class="text-[9px] text-text-muted font-bold uppercase tracking-wider mb-1">${comment.user} <span class="text-border-light px-1">•</span> ${comment.time}</p>
                                   ${comment.audioUrl ? 
                                     window.renderAudioPlayer ? window.renderAudioPlayer(comment.audioUrl, comment.user) : `<audio src="${comment.audioUrl}" controls></audio>` 
-                                    : `<p class="text-sm text-gray-700 leading-relaxed px-1">${comment.text}</p>`}
+                                    : `<p class="text-sm text-text-dark leading-relaxed">${comment.text}</p>`}
                                </div>
                             </div>
                          `).join('')}
-                         ${!(activeVersion.thread && activeVersion.thread.length) ? '<div class="py-8 text-center text-sm text-gray-400 italic">No feedback for this version yet. Be the first to comment below!</div>' : ''}
+                         ${!(activeVersion.thread && activeVersion.thread.length) ? '<div class="py-8 text-center text-[13px] text-text-muted font-medium italic">No feedback for this version yet.</div>' : ''}
                       </div>
 
-                      <!-- Animated Feedback Input Bar -->
+                      <!-- Feedback Input Bar -->
                       <div class="mt-8 relative w-full items-center">
-                         <input type="text" id="mp-comment-input" placeholder="Type a message or visual note..." class="w-full pl-5 pr-14 py-4 bg-white border border-gray-200 hover:border-gray-300 rounded-[16px] shadow-sm text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] transition-all">
+                         <input type="text" id="mp-comment-input" placeholder="Type a note..." class="w-full pl-5 pr-14 py-3 bg-white border border-border-light hover:border-brand/40 rounded-lg shadow-sm text-sm text-text-dark focus:outline-none focus:ring-4 focus:ring-brand/5 focus:border-brand transition-all">
                          
-                         <!-- Action Buttons Wrapper -->
-                         <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-10 h-10">
-                            <!-- Mic Icon -->
-                            <button id="mp-mic-btn" class="absolute inset-0 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-[#FF6B2B] rounded-[10px] transition-all duration-150 ease-in-out scale-100 opacity-100 voice-holder" title="Record Voice Note">
-                               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                         <div class="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-9 h-9">
+                            <button id="mp-mic-btn" class="absolute inset-0 flex items-center justify-center text-text-muted hover:text-brand transition-all scale-100 opacity-100" title="Voice Note">
+                               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                             </button>
-                            <!-- Send Icon (Orange Paper Plane) -->
-                            <button id="mp-send-btn" class="absolute inset-0 flex items-center justify-center text-white bg-[#FF6B2B] hover:bg-[#e65c20] shadow-md shadow-[#FF6B2B]/30 rounded-[10px] transition-all duration-150 ease-in-out scale-50 opacity-0 pointer-events-none" title="Send Feedback">
+                            <button id="mp-send-btn" class="absolute inset-0 flex items-center justify-center text-white bg-brand hover:opacity-90 rounded-lg transition-all scale-50 opacity-0 pointer-events-none">
                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                             </button>
                          </div>
@@ -408,23 +490,37 @@ window.initMotionProjects = function(container, socket, projectId) {
      // Wiring Add Version
      const addVerBtn = document.getElementById('mp-add-version-btn');
      if(addVerBtn) {
-        addVerBtn.onclick = () => {
-           const link = prompt('Enter video link for new version:');
-           if(link && link.match(/youtube\.com|vimeo\.com|drive\.google\.com/)) {
+         };
+     }
+
+     // Wiring Upload Version
+     const uploadVerBtn = document.getElementById('mp-upload-version-btn');
+     if(uploadVerBtn) {
+        uploadVerBtn.onclick = () => {
+           window.handleMPUpload(proj.id, 'v' + (proj.versions.length + 1), (fileData) => {
               const prevState = JSON.stringify(window.globalMotionProjects);
               const nextVId = 'v' + (proj.versions.length + 1);
-              proj.versions.push({ vId: nextVId, status: 'Draft', embedUrl: getEmbedUrl(link), dlUrl: link, thread: [] });
+              
+              proj.versions.push({ 
+                vId: nextVId, 
+                status: 'Draft', 
+                type: fileData.type,
+                fileUrl: fileData.url,
+                file_name: fileData.name,
+                embedUrl: fileData.url, 
+                dlUrl: fileData.url, 
+                thread: [] 
+              });
+              
               const nextState = JSON.stringify(window.globalMotionProjects);
-              pushToHistory('Add Version',
+              pushToHistory('Upload Version',
                 () => { window.globalMotionProjects = JSON.parse(prevState); renderProjectView(window.globalMotionProjects.find(p=>p.id===proj.id)); },
                 () => { window.globalMotionProjects = JSON.parse(nextState); renderProjectView(window.globalMotionProjects.find(p=>p.id===proj.id)); }
               );
               saveMotionState();
               currentActiveVId = nextVId;
               renderProjectView(proj);
-           } else if(link) {
-              if(window.showToast) window.showToast('Invalid video URL format', 'error');
-           }
+           });
         };
      }
 
@@ -571,13 +667,21 @@ window.initMotionProjects = function(container, socket, projectId) {
         const trashId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'tr' + Date.now();
         const payload = { id: trashId, type: 'Motion Project', title: copy.title, deletedAt: new Date().toLocaleDateString(), project: project.title, data: copy };
         window.appData.trash.push(payload);
-        if(window.dbInsert) window.dbInsert('trash', {
-            id: trashId,
-            type: payload.type,
-            title: payload.title,
-            project: payload.project,
-            payload: payload.data
-        });
+        if(window.dbInsert) {
+           (async () => {
+              const { data: { user } } = await window.supabaseClient.auth.getUser();
+              const userId = user?.id || null;
+              const dbPayload = {
+                  id: trashId,
+                  type: payload.type,
+                  title: payload.title,
+                  project: payload.project,
+                  payload: payload.data,
+                  ...(userId && { user_id: userId })
+              };
+              window.dbInsert('trash', dbPayload);
+           })();
+        }
         window.updateBadges();
      }
 

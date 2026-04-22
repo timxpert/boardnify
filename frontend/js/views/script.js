@@ -1,485 +1,482 @@
 window.initScript = function(container, socket, projectId) {
   const project = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
-  // Base State for Script Feature
-  const scriptState = {
-    content: '', // Replaced blocks with single HTML string
-    status: 'Draft',
-    isClient: window.activeRole === 'client',
-    historyStates: [] // for Version History
-  };
+  if (!project) return;
+  const _projectId = projectId || project?.id;
+  const userId = window.appData?.user?.id;
 
-  const saveSnapshot = () => {
-    scriptState.historyStates.push({ time: new Date().toLocaleTimeString(), text: scriptState.content });
-    saveState();
-  };
+  // --- STATE ---
+  let scripts = [];
+  let currentView = 'dashboard'; // 'dashboard' or 'editor'
+  let activeScript = null;
+  let autoSaveTimer = null;
 
-  // ─── LOCAL STORAGE HANDLERS ────────────────────────────────────────────────
-  const storageKey = `boardnify_script_${projectId || 'default'}`;
-  function saveState() {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(scriptState));
-    } catch(e) {
-      console.error('Failed to save script state', e);
-    }
-  }
-
-  function loadState() {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        Object.assign(scriptState, JSON.parse(saved));
-      }
-    } catch(e) {
-      console.error('Failed to load script state', e);
-    }
-  }
-
-  loadState();
-
-  // ─── STREAMING API HELPER ──────────────────────────────────────────────────
-  async function streamBackendRoute(url, bodyData, onChunk, onDone, onError) {
-    const fullUrl = url.startsWith('http') ? url : (window.BASE_URL || 'https://boardnify-backend.onrender.com').replace(/\/$/, '') + '/' + url.replace(/^\//, '');
-    try {
-        const response = await fetch(fullUrl, {
-            method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(bodyData)
-          });
-          
-          if (!response.ok) {
-             const errText = await response.text();
-             let errorMsg = 'Error occurred from server.';
-             try {
-                const errJson = JSON.parse(errText);
-                if (errJson.error) errorMsg = errJson.error;
-             } catch(e) {
-                errorMsg = errText;
-             }
-             console.error('API Error:', errorMsg);
-             if (onError) onError(errorMsg);
-             return;
-          }
-
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder("utf-8");
-          let done = false;
-          let buffer = "";
-
-          while (!done) {
-              const { value, done: doneReading } = await reader.read();
-              done = doneReading;
-              if (value) {
-                  buffer += decoder.decode(value, { stream: true });
-                  const lines = buffer.split('\n');
-                  buffer = lines.pop(); // keep last incomplete line
-                  
-                  for (let line of lines) {
-                      if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                          try {
-                              const data = JSON.parse(line.substring(6));
-                              if (data.type === 'content_block_delta' && data.delta && data.delta.text) {
-                                  onChunk(data.delta.text);
-                              }
-                          } catch(e) {}
-                      }
-                  }
-              }
-          }
-          if (onDone) onDone();
-      } catch(err) {
-          console.error('Streaming error', err);
-          if (onError) onError(err.message || 'Streaming error occurred.');
-      }
-  }
-
-  // ─── RENDERERS ─────────────────────────────────────────────────────────────
-
-  function renderTopBar() {
-    return `
-      <div class="h-16 px-8 border-b border-gray-200 bg-white flex items-center justify-between shadow-sm z-20 flex-shrink-0">
-        <div class="flex items-center gap-4">
-          <h2 class="text-xl font-bold text-gray-800">Script Collaboration</h2>
-          <span class="px-3 py-1 bg-${scriptState.status === 'Approved' ? 'green' : 'orange'}-100 text-${scriptState.status === 'Approved' ? 'green' : 'orange'}-700 text-xs font-bold rounded-full uppercase tracking-widest">${scriptState.status}</span>
-        </div>
-        <div class="flex items-center gap-3">
-          ${scriptState.isClient ? `
-            <button id="btn-request-changes" class="px-5 py-2 rounded-xl border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 smooth-transition">Request Changes</button>
-            <button id="btn-approve-script" class="px-5 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 shadow-md shadow-green-500/20 smooth-transition">Approve Script</button>
-          ` : `
-            <button onclick="window.showWhatsAppModal('${projectId}', '${project.title.replace(/'/g, "\\'")}', '${project.client || ''}')" class="bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold px-5 py-2 rounded-xl smooth-transition flex items-center gap-2 text-sm shadow-sm ${window.activeRole === 'client' ? 'hidden' : ''}">
-              <svg class="w-4 h-4 mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.646.685 5.148 1.956 7.394L.548 24l4.72-1.414A11.966 11.966 0 0012.031 24c6.646 0 12.031-5.385 12.031-12.032C24.062 5.385 18.677 0 12.031 0zm0 22.012c-2.217 0-4.341-.58-6.22-1.68l-.446-.265-3.513 1.053 1.074-3.418-.29-.462A9.973 9.973 0 012.019 12.03c0-5.526 4.493-10.02 10.012-10.02 5.52 0 10.012 4.494 10.012 10.02 0 5.526-4.492 10.02-10.012 10.02zm5.503-7.525c-.302-.151-1.789-.884-2.065-.986-.276-.102-.478-.151-.679.151-.201.302-.78 .986-.956 1.188-.176.202-.352.227-.654.076-.302-.151-1.277-.47-2.433-1.498-.901-.801-1.508-1.79-1.684-2.092-.176-.302-.019-.465.132-.616.136-.136.302-.352.453-.528.151-.176.201-.302.302-.503.1-.202.05-.378-.025-.529-.076-.151-.68-1.638-.931-2.242-.244-.589-.492-.51-.68-.519-.175-.01-.377-.01-.578-.01-.201 0-.528.075-.806.377-.276.302-1.056 1.033-1.056 2.518s1.082 2.919 1.233 3.12c.151.201 2.126 3.245 5.148 4.549.719.31 1.28.495 1.719.633.722.228 1.38.196 1.898.119.58-.086 1.789-.731 2.04-1.437.252-.707.252-1.31.177-1.437-.076-.127-.277-.202-.579-.353z"/></svg> 
-              Notify Client
-            </button>
-            <button class="px-5 py-2 rounded-xl border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 flex items-center gap-2 smooth-transition">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-              Share with Client
-            </button>
-            <button id="btn-request-approval" class="px-5 py-2 rounded-xl bg-brand text-white font-bold hover:bg-brand/90 shadow-md shadow-brand/20 smooth-transition">Request Approval</button>
-          `}
-        </div>
-      </div>
-    `;
-  }
-
-  function renderEmptyState() {
-    return `
-      <div class="flex-1 flex flex-col items-center justify-center bg-gray-50 h-full">
-        <div class="w-20 h-20 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mb-6">
-          <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-        </div>
-        <h3 class="text-2xl font-bold text-gray-900 mb-2">Start your Script</h3>
-        <p class="text-gray-500 mb-8 max-w-md text-center">Upload a document (.txt, .docx, .pdf) or write your script from scratch. Your client can review and leave notes.</p>
-        <div class="flex gap-4">
-          <input type="file" id="script-upload-input" accept=".txt,.pdf,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" class="hidden" />
-          <button id="btn-upload-script" class="px-6 py-3 bg-white border border-gray-200 text-gray-800 font-bold rounded-xl hover:shadow-md smooth-transition flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            Upload Script
-          </button>
-          <button id="btn-write-script" class="px-6 py-3 bg-brand text-white font-bold rounded-xl hover:bg-brand/90 shadow-lg shadow-brand/20 smooth-transition flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-            Write Script
-          </button>
-          
-          <button id="btn-ai-generate-open" class="px-6 py-3 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 hover:border-indigo-200 smooth-transition flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            Generate with AI
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderEditor() {
-    return `
-      <div class="flex-1 flex overflow-hidden">
-        <!-- Main Script Area -->
-        <div class="flex-1 flex flex-col bg-white overflow-hidden">
-          <!-- Inner Editor Toolbar -->
-          <div class="h-12 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center px-6 gap-2 flex-shrink-0 relative z-10">
-             
-             <!-- Formatting Tools -->
-             <div class="flex items-center gap-1 border-r border-gray-200 pr-2 mr-1">
-                <button type="button" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg smooth-transition editor-action-btn font-serif font-bold text-sm" title="Bold (Ctrl+B)" onclick="document.execCommand('bold',false,null)">B</button>
-                <button type="button" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg smooth-transition editor-action-btn font-serif italic text-sm" title="Italic (Ctrl+I)" onclick="document.execCommand('italic',false,null)">I</button>
-                <button type="button" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg smooth-transition editor-action-btn font-bold text-xs uppercase tracking-widest px-2" title="Scene Heading" onclick="document.execCommand('formatBlock',false,'H3')">SCENE</button>
-             </div>
-
-             <button id="btn-editor-save" class="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-200 rounded-lg smooth-transition editor-action-btn" title="Save Draft"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg></button>
-             <button id="btn-editor-pdf" class="p-1.5 justify-center flex items-center text-gray-500 hover:text-gray-800 hover:bg-gray-200 rounded-lg smooth-transition editor-action-btn" title="Export PDF"><b class="text-[10px] uppercase font-black">PDF</b></button>
-             <button id="btn-editor-history" class="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-200 rounded-lg smooth-transition editor-action-btn" title="Version History" onclick="document.getElementById('version-panel').classList.toggle('hidden')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>
-             <button id="btn-editor-dup" class="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-200 rounded-lg smooth-transition editor-action-btn" title="Duplicate"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg></button>
-             <div class="w-px h-4 bg-gray-300 mx-1"></div>
-             <button id="btn-editor-del" class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg smooth-transition editor-action-btn" title="Delete Script"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-             
-             <div class="ml-auto flex items-center gap-2">
-                <span id="save-indicator" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-2 py-0.5 rounded mr-2">All changes saved</span>
-                <button id="btn-toggle-analyzer" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border border-indigo-100 smooth-transition shadow-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Test for Conversion</button>
-                <button id="btn-ai-rewrite" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border border-indigo-100 smooth-transition shadow-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg> Rewrite for Conversion</button>
-             </div>
-          </div>
-
-          <div class="flex-1 overflow-y-auto p-12 lg:p-20 relative scrollbar-hide flex gap-10" id="script-editor-container">
-            <div class="max-w-3xl flex-1 mx-auto relative h-full">
-              <!-- Version History Quick Panel -->
-              <div id="version-panel" class="hidden absolute top-0 -right-72 bg-white shadow-xl border border-gray-100 rounded-xl p-4 w-64 z-20">
-                <h4 class="text-xs font-bold tracking-widest text-gray-400 uppercase border-b border-gray-50 pb-2 mb-2">Version History</h4>
-                <div class="space-y-2 max-h-60 overflow-y-auto" id="version-list">
-                  ${scriptState.historyStates.map((st, i) => `<div class="text-sm font-medium p-2 hover:bg-gray-50 rounded cursor-pointer flex justify-between group" onclick="window.restoreScript(${i})"><span>${st.time}</span><span class="text-brand opacity-0 group-hover:opacity-100 text-xs font-bold">Restore</span></div>`).join('')}
-                </div>
-              </div>
-
-              <!-- Full Rich Text Canvas -->
-              <style>
-                 #script-content:empty:before { content: attr(placeholder); color: #9ca3af; pointer-events: none; display: block; }
-                 #script-content h3 { font-weight: 900; text-transform: uppercase; font-size: 1.25rem; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em; color: #111827; }
-                 #script-content p { margin-bottom: 1rem; }
-              </style>
-              <div id="script-content" class="w-full h-full min-h-[500px] text-lg leading-relaxed text-gray-800 outline-none font-medium" ${!scriptState.isClient ? 'contenteditable="true"' : ''} placeholder="Start writing your script here...">${scriptState.content}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderSidebarContent() {
-    if (!scriptState.activeBlockId) {
-      return `
-        <div class="p-6 border-b border-gray-200 bg-white shadow-sm z-10">
-          <h3 class="font-bold text-gray-900 text-lg">Feedback & Comments</h3>
-          <p class="text-sm text-gray-500">Select a paragraph to view or leave notes.</p>
-        </div>
-        <div class="flex-1 flex flex-col items-center justify-center p-6 text-center opacity-50">
-          <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-          <p class="font-medium">Click on any paragraph<br>to start commenting.</p>
-        </div>
-      `;
-    }
-
-    const blockComments = scriptState.comments.filter(c => c.blockId === scriptState.activeBlockId);
-    
-    return `
-      <div class="p-6 border-b border-gray-200 bg-white shadow-sm z-10 flex justify-between items-center">
+  // --- HTML TEMPLATES ---
+  const dashboardLayout = `
+    <div class="h-full flex flex-col bg-[#F9F9FB] overflow-y-auto scrollbar-hide">
+      <header class="flex items-center justify-between px-10 py-8 shrink-0">
         <div>
-          <h3 class="font-bold text-gray-900 text-lg">Thread</h3>
-          <p class="text-sm text-gray-500">Comments on selected block</p>
+          <h1 class="text-3xl font-black text-text-dark tracking-tight">Scripts</h1>
+          <p class="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mt-1">Project Library & Writing Suite</p>
         </div>
-        <button id="btn-close-sidebar" class="text-gray-400 hover:text-gray-800 p-2 rounded-lg hover:bg-gray-100 smooth-transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6" id="comments-list">
-        ${blockComments.length === 0 ? `
-          <div class="flex-1 flex flex-col items-center justify-center text-center opacity-50 h-full">
-            <p class="font-medium">No comments here yet.<br>Start the conversation below.</p>
-          </div>
-        ` : blockComments.map(c => `
-          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div class="flex justify-between items-start mb-2">
-              <span class="font-bold text-sm text-gray-900">${c.user}</span>
-              <span class="text-xs text-gray-400">${c.date}</span>
-            </div>
-            ${c.text ? `<p class="text-gray-700 text-sm leading-relaxed">${c.text}</p>` : ''}
-            ${c.audioData ? `
-              <div class="mt-3 bg-gray-50 rounded-lg p-2 flex items-center gap-3 border border-gray-100">
-                <button class="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center flex-shrink-0 hover:bg-brand/90 smooth-transition" onclick="const a = new Audio('${c.audioData}'); a.play();">
-                  <svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                </button>
-                <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div class="w-1/3 h-full bg-brand"></div>
-                </div>
-                <span class="text-xs font-bold text-gray-500">Voice Note</span>
-              </div>
-            ` : ''}
-          </div>
-        `).join('')}
-      </div>
-
-      <div class="p-4 border-t border-gray-200 bg-white">
-        ${scriptState.isRecording ? `
-          <div class="px-4 py-6 flex flex-col items-center justify-center bg-red-50 rounded-xl border border-red-100 mb-3 animate-pulse">
-            <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-red-500/30 mb-3">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-            </div>
-            <p class="font-bold text-red-600 text-sm">Recording in progress...</p>
-            <p class="text-xs text-red-400 mt-1">Speak clearly into your microphone</p>
-          </div>
-          <button id="btn-stop-record" class="w-full py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md shadow-red-500/20 smooth-transition flex items-center justify-center gap-2">
-            <div class="w-3 h-3 bg-white rounded-sm"></div>
-            Stop & Save Voice Note
+        <div class="flex gap-3">
+          <button id="btn-upload-script" class="px-6 py-2.5 bg-white border border-gray-200 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-gray-50 smooth-transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            Upload
           </button>
-        ` : `
-          <textarea id="comment-input" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-brand focus:border-brand outline-none resize-none mb-3 smooth-transition" rows="3" placeholder="Write a comment..."></textarea>
-          <div class="flex justify-between items-center">
-            <button id="btn-record-voice" class="p-2 text-gray-400 hover:text-brand hover:bg-orange-50 rounded-lg smooth-transition" title="Record Voice Note">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-            </button>
-            <button id="btn-post-comment" class="px-5 py-2 bg-gray-900 text-white font-bold rounded-lg text-sm hover:bg-gray-800 smooth-transition">Post</button>
-          </div>
-        `}
-      </div>
-    `;
-  }
-
-  function render() {
-    container.innerHTML = `
-      <div class="flex flex-col h-full w-full bg-white relative overflow-hidden">
-        ${renderTopBar()}
-        ${!scriptState.content ? renderEmptyState() : renderEditor()}
-      </div>
-    `;
-    attachEvents();
-  }
-
-  // ─── EVENT HANDLERS ────────────────────────────────────────────────────────
-
-  function attachEvents() {
-    function showComingSoonModal() {
-      const modal = document.createElement('div');
-      modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in';
-      modal.innerHTML = `
-        <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden p-8 text-center animate-slide-up">
-          <div class="w-16 h-16 bg-orange-50 text-brand rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-          </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">Coming Soon</h2>
-          <p class="text-gray-500 mb-8">This AI feature is coming soon, seat tight.</p>
-          <button onclick="this.closest('.fixed').remove()" class="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl smooth-transition">Close</button>
+          <button id="btn-new-script" class="px-6 py-2.5 bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-90 smooth-transition shadow-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            New Script
+          </button>
         </div>
-      `;
-      document.body.appendChild(modal);
+      </header>
+
+      <div id="scripts-grid" class="px-10 pb-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Cards Injected -->
+      </div>
+
+      <div id="scripts-empty" class="hidden flex-1 flex flex-col items-center justify-center text-center p-20 animate-fade-in">
+        <div class="w-24 h-24 bg-white rounded-[32px] shadow-sm border border-gray-100 flex items-center justify-center mb-8">
+           <svg class="w-10 h-10 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+        </div>
+        <h2 class="text-xl font-bold text-text-dark mb-2">No scripts for this project</h2>
+        <p class="text-xs text-text-muted font-medium mb-8 max-w-xs">Start drafting your idea from scratch or import an existing document.</p>
+        <div class="flex gap-4">
+           <button class="welcome-new-btn px-8 py-3 bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-brand/20">Blank Script</button>
+           <button class="welcome-upload-btn px-8 py-3 bg-white border border-gray-100 text-[10px] font-black uppercase tracking-widest rounded-xl">Import File</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const editorLayout = `
+    <div class="h-full flex flex-col bg-white overflow-hidden animate-fade-in">
+      <header class="h-14 border-b border-gray-100 px-8 flex items-center justify-between z-50 bg-white/80 backdrop-blur-md shrink-0">
+         <div class="flex items-center gap-4 flex-1">
+            <button id="editor-back" class="p-2 -ml-2 text-gray-400 hover:text-text-dark smooth-transition">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <div class="w-px h-6 bg-gray-100"></div>
+            <input id="script-title-input" type="text" placeholder="Untitled script" class="flex-1 bg-transparent border-none outline-none font-bold text-sm text-text-dark placeholder:text-gray-200">
+         </div>
+         <div id="save-indicator" class="text-[9px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-200"></span>
+            SAVED
+         </div>
+      </header>
+
+      <div class="flex-1 overflow-y-auto px-8 py-12 flex justify-center bg-gray-50/30 scrollbar-hide" id="editor-scroll">
+         <div class="w-full max-w-4xl flex flex-col">
+            <!-- Floating Toolbar -->
+            <div class="sticky top-0 z-[100] flex justify-center mb-8">
+               <div class="bg-white/90 backdrop-blur-xl border border-gray-200 shadow-xl rounded-2xl p-1.5 flex items-center gap-1">
+                  <button data-cmd="bold" class="tool-btn" title="Bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"></path></svg></button>
+                  <button data-cmd="italic" class="tool-btn" title="Italic"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 20l4-16m-9 16h5m1-16h5"></path></svg></button>
+                  <button data-cmd="underline" class="tool-btn" title="Underline"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 3v7a5 5 0 0010 0V3M5 20h14"></path></svg></button>
+                  <div class="w-px h-4 bg-gray-100 mx-1"></div>
+                  <button data-cmd="formatBlock" data-val="H1" class="tool-btn text-[10px] font-black">H1</button>
+                  <button data-cmd="formatBlock" data-val="H2" class="tool-btn text-[10px] font-black">H2</button>
+                  <button data-cmd="formatBlock" data-val="P" class="tool-btn text-[10px] font-black">P</button>
+                  <div class="w-px h-4 bg-gray-100 mx-1"></div>
+                  <button data-cmd="insertUnorderedList" class="tool-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16M4 6h.01M4 12h.01M4 18h.01"></path></svg></button>
+                  <button data-cmd="undo" class="tool-btn ml-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg></button>
+                  <button data-cmd="redo" class="tool-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"></path></svg></button>
+               </div>
+            </div>
+
+            <div id="script-canvas" contenteditable="true" 
+                 class="min-h-[800px] w-full bg-white rounded-md shadow-sm border border-gray-100 p-20 focus:outline-none text-[15px] leading-[1.8] text-[#2C2C2C] font-normal empty:before:content-[attr(data-placeholder)] empty:before:text-gray-200"
+                 data-placeholder="Once upon a time..."></div>
+         </div>
+      </div>
+
+      <footer class="h-10 border-t border-gray-100 px-8 flex items-center justify-between shrink-0 bg-white z-50">
+         <div class="flex items-center gap-6">
+            <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest"><span id="word-count">0</span> WORDS</span>
+            <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest"><span id="char-count">0</span> CHARACTERS</span>
+         </div>
+         <span class="text-[9px] font-black text-gray-200 uppercase tracking-widest">Boardnify Editor v3.0</span>
+      </footer>
+    </div>
+  `;
+
+  // --- CORE LOGIC ---
+  const loadScripts = async () => {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('scripts')
+        .select('*')
+        .eq('project_id', _projectId)
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      scripts = data || [];
+      render();
+    } catch (err) {
+      console.error('Failed to load scripts:', err);
+      if (window.showToast) window.showToast('Failed to load scripts', 'error');
+    }
+  };
+
+  const render = () => {
+    if (currentView === 'dashboard') renderDashboard();
+    else renderEditor();
+  };
+
+  const renderDashboard = () => {
+    container.innerHTML = dashboardLayout;
+    const grid = document.getElementById('scripts-grid');
+    const empty = document.getElementById('scripts-empty');
+
+    if (scripts.length === 0) {
+      grid.classList.add('hidden');
+      empty.classList.remove('hidden');
+    } else {
+      grid.classList.remove('hidden');
+      empty.classList.add('hidden');
+      grid.innerHTML = scripts.map(s => {
+        const excerpt = s.content ? s.content.replace(/<[^>]*>/g, '').substring(0, 80) : 'No content yet...';
+        const dateStr = formatHumanDate(s.updated_at);
+        return `
+          <div class="script-card relative bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 smooth-transition group cursor-pointer" onclick="window.enterScript('${s.id}')">
+            <div class="absolute top-4 right-4 z-10">
+               <button class="p-2 text-gray-300 hover:text-text-dark transition-colors" onclick="event.stopPropagation(); window.toggleScriptMenu(this, '${s.id}')">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 5v.01M12 12v.01M12 19v.01"></path></svg>
+               </button>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 mb-6 group-hover:bg-brand/10 group-hover:text-brand transition-colors">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h3 class="text-sm font-bold text-text-dark mb-2 truncate pr-6">${s.title}</h3>
+            <p class="text-[11px] text-text-muted leading-relaxed line-clamp-3 mb-6">${excerpt}</p>
+            <div class="flex items-center justify-between pt-4 border-t border-gray-50">
+               <span class="px-2 py-0.5 rounded-full bg-gray-50 text-[8px] font-black uppercase tracking-widest text-text-muted">${s.source || 'TYPED'}</span>
+               <span class="text-[9px] font-bold text-gray-300 uppercase tracking-tighter">${dateStr}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
-    const aiGenOpenBtn = document.getElementById('btn-ai-generate-open');
-    const analyzerBtn = document.getElementById('btn-toggle-analyzer');
-    const rewriteBtn = document.getElementById('btn-ai-rewrite');
+    // Wiring Dashboard Buttons
+    document.getElementById('btn-new-script').onclick = createBlankScript;
+    document.getElementById('btn-upload-script').onclick = uploadScriptFile;
+    empty.querySelector('.welcome-new-btn').onclick = createBlankScript;
+    empty.querySelector('.welcome-upload-btn').onclick = uploadScriptFile;
+  };
 
-    if (aiGenOpenBtn) aiGenOpenBtn.onclick = showComingSoonModal;
-    if (analyzerBtn) analyzerBtn.onclick = showComingSoonModal;
-    if (rewriteBtn) rewriteBtn.onclick = showComingSoonModal;
+  const renderEditor = () => {
+    container.innerHTML = editorLayout;
+    const titleInput = document.getElementById('script-title-input');
+    const canvas = document.getElementById('script-canvas');
+    const backBtn = document.getElementById('editor-back');
 
-    if (uploadBtn) {
-      uploadBtn.onclick = () => uploadInput.click();
-    }
+    titleInput.value = activeScript.title;
+    canvas.innerHTML = activeScript.content || '';
     
-    if (uploadInput) {
-      uploadInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        // Mock robust parsing logic handling different extensions, resolving ultimately to text
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          let text = evt.target.result;
-          
-          if(file.name.endsWith('.pdf') || file.name.endsWith('.docx')) {
-             // Mock heuristic binary extraction fallback to show it's "processing" formatted text
-             text = `<p><i>(Extracted from ${file.name})</i></p><p>This is the simulated decoded text from your binary document.</p><p><b>Start editing to format it properly.</b></p>`;
-          } else {
-             // Safely map \n to <p>
-             text = text.split(/\n\s*\n|\n/).filter(p => p.trim()).map(p => `<p>${p.trim()}</p>`).join('');
-          }
-          
-          scriptState.content = text;
-          saveSnapshot();
-          scriptState.status = 'Draft';
-          saveState();
-          render();
-          if(window.showToast) window.showToast('Script uploaded successfully!', 'success');
-        };
-        
-        if (file.name.endsWith('.pdf') || file.name.endsWith('.docx')) {
-            // Mocking a short delay for "binary parsing", then read dummy text
-            setTimeout(() => {
-                const blob = new Blob(["mock binary data"], {type: 'text/plain'});
-                reader.readAsText(blob);
-            }, 400);
+    // Auto-focus title if brand new
+    if (activeScript.title === 'Untitled script') titleInput.select();
+
+    // Event Listeners
+    backBtn.onclick = () => {
+      currentView = 'dashboard';
+      activeScript = null;
+      render();
+    };
+
+    titleInput.oninput = () => {
+      activeScript.title = titleInput.value;
+      triggerAutoSave();
+    };
+
+    canvas.oninput = () => {
+      activeScript.content = canvas.innerHTML;
+      updateEditorStats();
+      triggerAutoSave();
+      applySceneStyling(canvas);
+    };
+
+    // Toolbar logic
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+       btn.onclick = () => {
+          const cmd = btn.dataset.cmd;
+          const val = btn.dataset.val || null;
+          document.execCommand(cmd, false, val);
+          canvas.focus();
+       };
+    });
+
+    updateEditorStats();
+  };
+
+  const updateEditorStats = () => {
+    const canvas = document.getElementById('script-canvas');
+    if (!canvas) return;
+    const text = canvas.innerText || '';
+    const words = text.trim().split(/\s+/).filter(x => x.length > 0).length;
+    const chars = text.length;
+    document.getElementById('word-count').textContent = words;
+    document.getElementById('char-count').textContent = chars;
+  };
+
+  // --- ACTIONS ---
+  window.enterScript = (id) => {
+    activeScript = scripts.find(s => s.id === id);
+    if (!activeScript) return;
+    currentView = 'editor';
+    render();
+  };
+
+  const createBlankScript = async () => {
+    const newScript = {
+      project_id: _projectId,
+      user_id: userId,
+      title: 'Untitled script',
+      content: '',
+      source: 'typed'
+    };
+
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('scripts')
+        .insert(newScript)
+        .select()
+        .single();
+
+      if (error) throw error;
+      scripts.unshift(data);
+      activeScript = data;
+      currentView = 'editor';
+      render();
+      if (window.showToast) window.showToast('New script created');
+    } catch (err) {
+      console.error(err);
+      if (window.showToast) window.showToast('Failed to create script', 'error');
+    }
+  };
+
+  const uploadScriptFile = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.txt,.md';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (window.showToast) window.showToast('Analysing document...', 'info');
+
+      try {
+        let content = '';
+        if (file.name.endsWith('.pdf')) {
+          content = await extractTextFromPDF(file);
         } else {
-            reader.readAsText(file);
+          content = await file.text();
+          if (file.name.endsWith('.md')) {
+            content = content.replace(/\n\n/g, '<p></p>').replace(/\n/g, '<br>');
+          } else {
+            content = content.split('\n').map(l => `<p>${l}</p>`).join('');
+          }
         }
-      };
-    }
-    
-    if (writeBtn) {
-      writeBtn.onclick = () => {
-        scriptState.content = '<p><br></p>';
-        saveState();
+
+        const newScript = {
+          project_id: _projectId,
+          user_id: userId,
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          content: content,
+          source: 'uploaded'
+        };
+
+        const { data, error } = await window.supabaseClient
+          .from('scripts')
+          .insert(newScript)
+          .select()
+          .single();
+
+        if (error) throw error;
+        scripts.unshift(data);
+        activeScript = data;
+        currentView = 'editor';
         render();
-        setTimeout(() => {
-          const content = document.getElementById('script-content');
-          if (content) content.focus();
-        }, 50);
+        if (window.showToast) window.showToast('Document uploaded successfully');
+      } catch (err) {
+        console.error(err);
+        if (window.showToast) window.showToast('Import failed: ' + err.message, 'error');
+      }
+    };
+    input.click();
+  };
+
+  const extractTextFromPDF = async (file) => {
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+      reader.onload = async () => {
+        try {
+          const typedarray = new Uint8Array(reader.result);
+          const pdf = await pdfjsLib.getDocument(typedarray).promise;
+          let fullText = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += `<p>${pageText}</p>`;
+          }
+          resolve(fullText);
+        } catch (err) { reject(err); }
       };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const triggerAutoSave = () => {
+    updateSaveIndicator('saving');
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(performSave, 1000);
+  };
+
+  const performSave = async () => {
+    if (!activeScript) return;
+    try {
+      const { error } = await window.supabaseClient
+        .from('scripts')
+        .update({
+          title: activeScript.title,
+          content: activeScript.content,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', activeScript.id);
+
+      if (error) throw error;
+      updateSaveIndicator('saved');
+    } catch (err) {
+      console.error('Save failed:', err);
+      updateSaveIndicator('failed');
     }
+  };
 
-    // Editor Toolbar Actions
-    const btnSave = document.getElementById('btn-editor-save');
-    if(btnSave) btnSave.onclick = () => {
-        saveSnapshot();
-        const ind = document.getElementById('save-indicator');
-        if(ind) {
-           ind.textContent = 'Saving...';
-           setTimeout(() => { ind.textContent = 'All changes saved'; }, 800);
+  const updateSaveIndicator = (status) => {
+    const el = document.getElementById('save-indicator');
+    if (!el) return;
+    if (status === 'saving') {
+      el.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span> SAVING...';
+      el.style.opacity = '1';
+    } else if (status === 'saved') {
+      el.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> SAVED';
+      setTimeout(() => { if (el) el.style.opacity = '0.3'; }, 2000);
+    } else {
+      el.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> UNSAVED CHANGES';
+      el.style.opacity = '1';
+    }
+  };
+
+  const applySceneStyling = (canvas) => {
+    // Light scene slug styling if supported
+    // For now we keep it simple as requested
+  };
+
+  const formatHumanDate = (date) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diffDays = Math.floor((now - d) / (1000 * 6) / (60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
+  // --- MENU ACTIONS ---
+  window.toggleScriptMenu = (btn, id) => {
+     const existing = document.getElementById('script-context-menu');
+     if (existing) existing.remove();
+
+     const menu = document.createElement('div');
+     menu.id = 'script-context-menu';
+     menu.className = 'fixed bg-white shadow-2xl rounded-2xl border border-gray-100 py-2 w-48 z-[1000] animate-in zoom-in-95 duration-200';
+     const rect = btn.getBoundingClientRect();
+     menu.style.top = `${rect.bottom + 10}px`;
+     menu.style.left = `${rect.right - 192}px`;
+
+     menu.innerHTML = `
+        <button class="w-full text-left px-4 py-2.5 text-xs font-bold text-text-dark hover:bg-gray-50 flex items-center gap-3 transition-colors" onclick="window.renameScript('${id}')">
+           <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+           Rename
+        </button>
+        <button class="w-full text-left px-4 py-2.5 text-xs font-bold text-text-dark hover:bg-gray-50 flex items-center gap-3 transition-colors" onclick="window.duplicateScript('${id}')">
+           <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+           Duplicate
+        </button>
+        <div class="h-px bg-gray-50 my-1 mx-2"></div>
+        <button class="w-full text-left px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors" onclick="window.deleteScript('${id}')">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+           Delete
+        </button>
+     `;
+     document.body.appendChild(menu);
+
+     const closeHandler = (e) => {
+        if (!menu.contains(e.target) && e.target !== btn) {
+           menu.remove();
+           document.removeEventListener('click', closeHandler);
         }
-    };
-    
-    window.restoreScript = (index) => {
-        if(confirm('Restore this version? Unsaved changes will be lost.')) {
-           const st = scriptState.historyStates[index];
-           if(st) {
-              parseTextToBlocks(st.text);
-              if(window.showToast) window.showToast('Version restored', 'info');
-           }
-        }
-    };
+     };
+     document.addEventListener('click', closeHandler);
+  };
 
-    const btnPdf = document.getElementById('btn-editor-pdf');
-    if(btnPdf) btnPdf.onclick = () => { if(window.showToast) window.showToast('Generating PDF...'); };
-
-    const btnDup = document.getElementById('btn-editor-dup');
-    if(btnDup) btnDup.onclick = () => { 
-        saveSnapshot();
-        if(window.showToast) window.showToast('Script Duplicated!'); 
-    };
-    
-    const btnDel = document.getElementById('btn-editor-del');
-    if(btnDel) btnDel.onclick = () => { 
-        if(confirm('Delete script entirely?')) {
-           scriptState.content = '';
-           scriptState.historyStates = [];
-           scriptState.status = 'Draft';
-           saveState();
+  window.renameScript = async (id) => {
+     const s = scripts.find(i => i.id === id);
+     if (!s) return;
+     const newName = prompt('Enter new script title:', s.title);
+     if (newName && newName !== s.title) {
+        try {
+           await window.supabaseClient.from('scripts').update({ title: newName }).eq('id', id);
+           s.title = newName;
            render();
-        }
-    };
+           if (window.showToast) window.showToast('Renamed successfully');
+        } catch (err) { console.error(err); }
+     }
+  };
 
-    const scriptContent = document.getElementById('script-content');
-    if (scriptContent && !scriptState.isClient) {
-      let saveTimeout;
-      scriptContent.addEventListener('input', (e) => {
-          scriptState.content = e.currentTarget.innerHTML;
-          
-          const ind = document.getElementById('save-indicator');
-          if(ind) ind.textContent = 'Saving...';
-          
-          clearTimeout(saveTimeout);
-          saveTimeout = setTimeout(() => {
-             saveSnapshot();
-             if(ind) ind.textContent = 'All changes saved';
-          }, 1500);
-      });
-    }
+  window.duplicateScript = async (id) => {
+     const s = scripts.find(i => i.id === id);
+     if (!s) return;
+     const copy = { ...s, title: s.title + ' (Copy)' };
+     delete copy.id;
+     delete copy.created_at;
+     delete copy.updated_at;
 
-    // Version Restore Method (overriding the global one inside attachEvents scope)
-    window.restoreScript = (index) => {
-        if(confirm('Restore this version? Unsaved changes will be lost.')) {
-           const st = scriptState.historyStates[index];
-           if(st) {
-              scriptState.content = st.text;
-              saveState();
-              render();
-              if(window.showToast) window.showToast('Version restored', 'info');
-           }
-        }
-    };
-
-    // Top bar actions
-    const approveBtn = document.getElementById('btn-approve-script');
-    if (approveBtn) {
-      approveBtn.onclick = () => {
-        scriptState.status = 'Approved';
-        saveState();
+     try {
+        const { data, error } = await window.supabaseClient.from('scripts').insert(copy).select().single();
+        if (error) throw error;
+        scripts.unshift(data);
         render();
-        if (window.showToast) window.showToast('Script Approved!', 'success');
-      };
-    }
+        if (window.showToast) window.showToast('Script duplicated');
+     } catch (err) { console.error(err); }
+  };
 
-    const reqChangesBtn = document.getElementById('btn-request-changes');
-    if (reqChangesBtn) {
-      reqChangesBtn.onclick = () => {
-        scriptState.status = 'Needs Revisions';
-        saveState();
+  window.deleteScript = async (id) => {
+     if (!confirm('Delete this script? This cannot be undone.')) return;
+     try {
+        await window.supabaseClient.from('scripts').delete().eq('id', id);
+        scripts = scripts.filter(s => s.id !== id);
         render();
-        if (window.showToast) window.showToast('Revisions Requested.', 'warning');
-      };
+        if (window.showToast) window.showToast('Script deleted');
+     } catch (err) { console.error(err); }
+  };
+
+  // --- INIT ---
+  loadScripts();
+
+  // Styles
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .tool-btn {
+      width: 32px; height: 32px; display: flex; items-center; justify-center; 
+      color: #64748b; border-radius: 10px; transition: all 0.2s;
     }
-
-    const reqApprovalBtn = document.getElementById('btn-request-approval');
-    if (reqApprovalBtn) {
-      reqApprovalBtn.onclick = () => {
-        scriptState.status = 'Pending Review';
-        saveState();
-        render();
-        if (window.showToast) window.showToast('Sent to Client for review.', 'info');
-      };
-    }
-
-    // Remove sidebar logic, comments, and parseTextToBlocks as RTE engine handles text internally
-  }
-
-  // Initial render
-  render();
+    .tool-btn:hover { background: #f1f5f9; color: #020617; }
+    .tool-btn:active { background: #e2e8f0; }
+    
+    #script-canvas h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
+    #script-canvas h2 { font-size: 1.5rem; font-weight: 800; margin-top: 2.5rem; margin-bottom: 1rem; color: #1a1a1a; }
+    #script-canvas p { margin-bottom: 1.2rem; }
+  `;
+  document.head.appendChild(style);
 };

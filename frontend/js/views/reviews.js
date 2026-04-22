@@ -1,5 +1,6 @@
 window.initReviews = function(container, socket, projectId) {
   const project = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
+  const isRealUUID = (id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   
   if (!window.appData.reviews) {
     window.appData.reviews = [];
@@ -11,15 +12,12 @@ window.initReviews = function(container, socket, projectId) {
     return `
       <header class="flex justify-between items-end mb-8">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 mb-1">${project.title} Reviews</h1>
-          <p class="text-sm text-gray-500">Manage pending approvals and feedback deliverables.</p>
+          <h1 class="text-3xl font-bold text-text-dark mb-1">Reviews</h1>
+          <p class="text-sm text-text-muted">Manage pending approvals and feedback deliverables.</p>
         </div>
         ${window.activeRole !== 'client' ? `
            <div class="flex gap-2">
-             <button onclick="window.showWhatsAppModal('${projectId}', '${project.title.replace(/'/g, "\\'")}', '${project.client || ''}')" class="bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold py-2.5 px-6 rounded-xl text-xs uppercase tracking-widest shadow-lg shadow-[#25D366]/20 smooth-transition flex items-center gap-2">
-               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.646.685 5.148 1.956 7.394L.548 24l4.72-1.414A11.966 11.966 0 0012.031 24c6.646 0 12.031-5.385 12.031-12.032C24.062 5.385 18.677 0 12.031 0zm0 22.012c-2.217 0-4.341-.58-6.22-1.68l-.446-.265-3.513 1.053 1.074-3.418-.29-.462A9.973 9.973 0 012.019 12.03c0-5.526 4.493-10.02 10.012-10.02 5.52 0 10.012 4.494 10.012 10.02 0 5.526-4.492 10.02-10.012 10.02zm5.503-7.525c-.302-.151-1.789-.884-2.065-.986-.276-.102-.478-.151-.679.151-.201.302-.78 .986-.956 1.188-.176.202-.352.227-.654.076-.302-.151-1.277-.47-2.433-1.498-.901-.801-1.508-1.79-1.684-2.092-.176-.302-.019-.465.132-.616.136-.136.302-.352.453-.528.151-.176.201-.302.302-.503.1-.202.05-.378-.025-.529-.076-.151-.68-1.638-.931-2.242-.244-.589-.492-.51-.68-.519-.175-.01-.377-.01-.578-.01-.201 0-.528.075-.806.377-.276.302-1.056 1.033-1.056 2.518s1.082 2.919 1.233 3.12c.151.201 2.126 3.245 5.148 4.549.719.31 1.28.495 1.719.633.722.228 1.38.196 1.898.119.58-.086 1.789-.731 2.04-1.437.252-.707.252-1.31.177-1.437-.076-.127-.277-.202-.579-.353z"/></svg> Notify Client
-             </button>
-             <button id="req-review-main-btn" class="bg-[#FF6B2B] hover:bg-[#e65c20] text-white font-bold py-2.5 px-6 rounded-xl text-xs uppercase tracking-widest shadow-lg shadow-[#FF6B2B]/20 smooth-transition flex items-center gap-2">
+             <button id="req-review-main-btn" class="bg-brand hover:bg-opacity-90 text-white font-bold py-2.5 px-6 rounded-lg text-xs smooth-transition flex items-center gap-2">
                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                Request Review
              </button>
@@ -32,28 +30,28 @@ window.initReviews = function(container, socket, projectId) {
   function renderTabs() {
      const tabs = ['All', 'Pending', 'In Review', 'Approved', 'Changes Requested'];
      return `
-       <div class="flex gap-4 mb-6 border-b border-gray-100 overflow-x-auto">
-         ${tabs.map(t => `
-           <button class="rev-tab border-b-2 pb-3 px-1 text-sm font-bold transition-all whitespace-nowrap ${t === currentTab ? 'border-[#FF6B2B] text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-700'}" data-tab="${t}">${t}</button>
-         `).join('')}
-       </div>
+        <div class="flex gap-6 mb-8 border-b border-border-light overflow-x-auto">
+          ${tabs.map(t => `
+            <button class="rev-tab border-b-2 pb-3 px-0 text-sm font-bold transition-all whitespace-nowrap ${t === currentTab ? 'border-brand text-brand' : 'border-transparent text-text-muted hover:text-text-dark'}" data-tab="${t}">${t}</button>
+          `).join('')}
+        </div>
      `;
   }
 
   function renderEmptyState() {
      return `
-        <div class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm text-center">
-           <div class="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 text-gray-300">
-             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-           </div>
-           <h3 class="text-xl font-black text-gray-800 tracking-tight mb-2">No reviews yet</h3>
-           <p class="text-sm text-gray-500 max-w-sm mx-auto mb-8 leading-relaxed">Request a client review to get feedback and approvals on your deliverables.</p>
-           ${window.activeRole !== 'client' ? `
-             <button id="req-review-empty-btn" class="bg-[#FF6B2B] hover:bg-[#e65c20] text-white font-bold py-3 px-8 rounded-xl text-xs uppercase tracking-widest shadow-xl shadow-[#FF6B2B]/20 smooth-transition">
-                Request Review
-             </button>
-           ` : ''}
-        </div>
+         <div class="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-border-light shadow-subtle text-center">
+            <div class="w-16 h-16 bg-bg-canvas rounded-2xl flex items-center justify-center mb-6 text-text-muted">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-text-dark mb-2">No reviews yet</h3>
+            <p class="text-sm text-text-muted max-w-sm mx-auto mb-8 leading-relaxed">Request a client review to get feedback and approvals on your deliverables.</p>
+            ${window.activeRole !== 'client' ? `
+              <button id="req-review-empty-btn" class="bg-brand text-white font-bold py-2.5 px-8 rounded-lg text-xs smooth-transition shadow-sm">
+                 Request Review
+              </button>
+            ` : ''}
+         </div>
      `;
   }
 
@@ -72,7 +70,7 @@ window.initReviews = function(container, socket, projectId) {
           <div class="p-6 flex-1 overflow-y-auto space-y-6">
              <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Project Version</label>
-                <select id="sr-version" class="w-full text-sm font-medium bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] outline-none">
+                <select id="sr-version" class="w-full text-sm font-medium bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#7C6FF7]/20 focus:border-[#7C6FF7] outline-none">
                    <option value="v1">Version 1 (V1)</option>
                    <option value="v2">Version 2 (V2)</option>
                    <option value="v3">Version 3 (V3)</option>
@@ -82,29 +80,29 @@ window.initReviews = function(container, socket, projectId) {
              <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Client Participant</label>
                 <div class="relative">
-                   <select id="sr-client" class="w-full text-sm font-medium bg-gray-50 border border-gray-200 rounded-xl p-3 pl-12 focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] outline-none appearance-none">
+                   <select id="sr-client" class="w-full text-sm font-medium bg-gray-50 border border-gray-200 rounded-xl p-3 pl-12 focus:ring-2 focus:ring-[#7C6FF7]/20 focus:border-[#7C6FF7] outline-none appearance-none">
                       <option value="Acme Corp">Acme Corp Team</option>
                       <option value="Globex">Globex Reviewers</option>
                    </select>
-                   <div class="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-brand/20 flex items-center justify-center text-brand text-xs font-bold">A</div>
+                   <div class="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#7C6FF7]/20 flex items-center justify-center text-[#7C6FF7] text-xs font-bold">A</div>
                    <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div>
                 </div>
              </div>
 
              <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Review due by (Optional)</label>
-                <input type="date" id="sr-deadline" class="w-full text-sm font-medium bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] outline-none text-gray-600">
+                <input type="date" id="sr-deadline" class="w-full text-sm font-medium bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#7C6FF7]/20 focus:border-[#7C6FF7] outline-none text-gray-600">
              </div>
 
              <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Message</label>
-                <textarea id="sr-msg" class="w-full text-sm font-medium bg-gray-50 border border-gray-200 rounded-xl p-4 focus:ring-2 focus:ring-[#FF6B2B]/20 focus:border-[#FF6B2B] outline-none h-32 resize-none leading-relaxed text-gray-700">Hi team, please review the latest version of this project and share your feedback here.</textarea>
+                <textarea id="sr-msg" class="w-full text-sm font-medium bg-gray-50 border border-gray-200 rounded-xl p-4 focus:ring-2 focus:ring-[#7C6FF7]/20 focus:border-[#7C6FF7] outline-none h-32 resize-none leading-relaxed text-gray-700">Hi team, please review the latest version of this project and share your feedback here.</textarea>
              </div>
           </div>
           
           <div class="p-6 border-t border-gray-100 flex items-center justify-between bg-white isolate">
              <button id="cancel-slide-btn" class="px-6 py-3 font-bold text-xs uppercase tracking-widest text-gray-500 hover:text-gray-900 rounded-xl hover:bg-gray-100 smooth-transition">Cancel</button>
-             <button id="submit-slide-btn" class="bg-[#FF6B2B] hover:bg-[#e65c20] text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#FF6B2B]/20 smooth-transition">Send Request</button>
+             <button id="submit-slide-btn" class="bg-[#7C6FF7] hover:bg-[#6a5de8] text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#7C6FF7]/20 smooth-transition">Send Request</button>
           </div>
        </div>
      `;
@@ -133,26 +131,26 @@ window.initReviews = function(container, socket, projectId) {
      return `
        <div class="flex flex-col gap-4">
          ${visibleReviews.map(rev => {
-            let statusBg = 'bg-gray-100 text-gray-600';
-            if(rev.status === 'Pending') statusBg = 'bg-yellow-100 text-yellow-800';
-            if(rev.status === 'In Review') statusBg = 'bg-blue-100 text-blue-800';
-            if(rev.status === 'Approved') statusBg = 'bg-green-100 text-green-800';
-            if(rev.status === 'Changes Requested') statusBg = 'bg-red-100 text-red-800';
+            let statusBadge = 'badge-gray';
+            if(rev.status === 'Pending') statusBadge = 'badge-yellow';
+            if(rev.status === 'In Review') statusBadge = 'badge-purple';
+            if(rev.status === 'Approved') statusBadge = 'badge-green';
+            if(rev.status === 'Changes Requested') statusBadge = 'badge-red';
             
             return `
-              <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md smooth-transition flex flex-col md:flex-row md:items-center justify-between gap-6 group">
+              <div class="bg-white border border-border-light rounded-xl p-5 hover:shadow-subtle transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group">
                 <div class="flex items-center gap-5">
-                   <div class="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 group-hover:bg-[#FF6B2B]/5 group-hover:text-[#FF6B2B] smooth-transition text-gray-400">
-                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                   <div class="w-12 h-12 bg-bg-canvas rounded-lg flex items-center justify-center border border-border-light group-hover:bg-brand/5 group-hover:text-brand smooth-transition text-text-muted">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                    </div>
                    <div>
-                      <div class="flex items-center gap-3 mb-1">
-                         <h3 class="font-bold text-gray-900 text-lg leading-none">${rev.title}</h3>
-                         <span class="text-[10px] font-black uppercase tracking-widest bg-gray-100 px-2 py-0.5 rounded text-gray-500 border border-gray-200">${rev.version}</span>
+                      <div class="flex items-center gap-2 mb-1">
+                         <h3 class="font-bold text-text-dark text-[15px] leading-none">${rev.title}</h3>
+                         <span class="text-[9px] font-bold uppercase tracking-wider bg-bg-canvas px-1.5 py-0.5 rounded text-text-muted border border-border-light">${rev.version}</span>
                       </div>
-                      <p class="text-[11px] font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
-                         <span class="w-4 h-4 rounded-full bg-brand/20 text-brand flex items-center justify-center font-bold text-[8px]">${rev.client.charAt(0)}</span>
-                         ${rev.client} <span class="text-gray-300">•</span> Sent ${rev.date} ${rev.deadline ? `<span class="text-gray-300">•</span> <span class="text-red-500 px-1 rounded bg-red-50 font-bold">Due ${rev.deadline}</span>` : ''}
+                      <p class="text-[11px] font-medium text-text-muted flex items-center gap-2">
+                         <span class="w-4 h-4 rounded-full bg-brand/10 text-brand flex items-center justify-center font-bold text-[8px]">${rev.client.charAt(0)}</span>
+                         ${rev.client} <span class="text-border-light">•</span> Sent ${rev.date} ${rev.deadline ? `<span class="text-border-light">•</span> <span class="text-red-500 font-bold">Due ${rev.deadline}</span>` : ''}
                       </p>
                    </div>
                 </div>
@@ -160,8 +158,7 @@ window.initReviews = function(container, socket, projectId) {
                 <div class="flex items-center gap-5">
                    <!-- Status Badge -->
                    <div class="flex flex-col items-end">
-                      <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 hidden md:block">Status</span>
-                      <span class="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${statusBg}">${rev.status}</span>
+                      <span class="badge ${statusBadge}">${rev.status}</span>
                    </div>
 
                    <!-- Context Actions -->
@@ -246,7 +243,14 @@ window.initReviews = function(container, socket, projectId) {
         };
 
         window.appData.reviews.unshift(newRev);
-        if(window.dbUpdate) window.dbUpdate('projects', projectId, { data: window.appData.projects.find(p=>p.id===projectId).data });
+        if(window.dbInsert) {
+           (async () => {
+              const { data: { user } } = await window.supabaseClient.auth.getUser();
+              const userId = user?.id || null;
+              const payload = { ...newRev, project_id: projectId, ...(userId && { user_id: userId }) };
+              window.dbInsert('reviews', payload);
+           })();
+        }
         
         if(window.showToast) window.showToast('Review request sent to client!');
         toggleSlide(false);
@@ -262,18 +266,30 @@ window.initReviews = function(container, socket, projectId) {
            
            if(action === 'remind') {
               if(window.showToast) window.showToast(`Reminder sent to ${rev.client}!`);
-           } else if (action === 'approve') {
-              rev.status = 'Approved';
-              if(window.showToast) window.showToast('Project Approved!');
-              renderDashboard();
-           } else if (action === 'reject') {
-              rev.status = 'Changes Requested';
-              if(window.showToast) window.showToast('Changes Requested!');
-              renderDashboard();
-           } else if (action === 'start-review') {
-              rev.status = 'In Review';
-              if(window.showToast) window.showToast('Started Reviewing!');
-              renderDashboard();
+            } else if (action === 'approve') {
+               rev.status = 'Approved';
+                if(window.dbUpdate) {
+                   if (!id || id === 'null') return;
+                   window.dbUpdate('reviews', id, { status: 'Approved' });
+                }
+               if(window.showToast) window.showToast('Project Approved!');
+               renderDashboard();
+            } else if (action === 'reject') {
+               rev.status = 'Changes Requested';
+                if(window.dbUpdate) {
+                   if (!id || id === 'null') return;
+                   window.dbUpdate('reviews', id, { status: 'Changes Requested' });
+                }
+               if(window.showToast) window.showToast('Changes Requested!');
+               renderDashboard();
+            } else if (action === 'start-review') {
+               rev.status = 'In Review';
+                if(window.dbUpdate) {
+                   if (!id || id === 'null') return;
+                   window.dbUpdate('reviews', id, { status: 'In Review' });
+                }
+               if(window.showToast) window.showToast('Started Reviewing!');
+               renderDashboard();
            }
         };
      });

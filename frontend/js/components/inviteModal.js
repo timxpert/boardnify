@@ -139,7 +139,7 @@ window.renderInviteModal = function(container) {
     if (e.target === modal) close();
   });
 
-  sendBtn.addEventListener('click', () => {
+  sendBtn.addEventListener('click', async () => {
     const email = emailInput.value.trim();
     if (!email || !email.includes('@')) {
       if(window.showToast) window.showToast('Please enter a valid email address.');
@@ -151,67 +151,112 @@ window.renderInviteModal = function(container) {
     const roleRaw = roleSelect.value;
     let roleLabel = 'Client Role';
     let avatarChar = 'C';
-    let gradient = 'from-green-400 to-green-600';
-
+    let gradient = 'from-yellow-400 to-yellow-600'; // Make pending visually distinct
+    
     if (roleRaw === 'designer') {
       roleLabel = 'Designer Role';
       avatarChar = 'D';
-      gradient = 'from-blue-400 to-blue-600';
     } else if (roleRaw === 'client_team') {
       roleLabel = 'Client Team';
       avatarChar = 'T';
-      gradient = 'from-purple-400 to-purple-600';
     }
-
-    const newId = 'collab-' + Date.now();
-    const newHtml = '<div class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-100 shadow-sm opacity-0 transform translate-y-2 transition-all duration-300" id="' + newId + '">' +
-        '<div class="flex items-center gap-3">' +
-          '<div class="relative">' +
-            '<div class="w-10 h-10 rounded-full bg-gradient-to-br ' + gradient + ' flex items-center justify-center text-white font-bold border border-gray-200 shadow-sm">' + avatarChar + '</div>' +
-            '<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full" title="Online (Pending Verify)"></span>' +
-          '</div>' +
-          '<div>' +
-            '<h4 class="text-sm font-bold text-gray-800 truncate w-32">' + email + '</h4>' +
-            '<p class="text-xs text-brand font-medium">' + roleLabel + '</p>' +
-          '</div>' +
-        '</div>' +
-        '<div class="flex items-center gap-2">' +
-          '<select class="text-xs bg-gray-50 border border-gray-200 rounded p-1 text-gray-600 outline-none focus:border-brand" onchange="window.showToast(\'Role updated successfully\')">' +
-            '<option value="client" ' + (roleRaw==='client'?'selected':'') + '>Client</option>' +
-            '<option value="client_team" ' + (roleRaw==='client_team'?'selected':'') + '>Client Team</option>' +
-            '<option value="designer" ' + (roleRaw==='designer'?'selected':'') + '>Designer</option>' +
-          '</select>' +
-          '<button class="text-gray-400 hover:text-red-500 p-1 smooth-transition" title="Remove User" onclick="' +
-            'if(confirm(\'Remove this user from the project?\')) {' +
-              'document.getElementById(\'' + newId + '\').remove();' +
-              'document.getElementById(\'collab-count\').textContent = parseInt(document.getElementById(\'collab-count\').textContent) - 1;' +
-              'if(window.showToast) window.showToast(\'User removed\');' +
-            '}' +
-          '">' +
-            '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>' +
-          '</button>' +
-        '</div>' +
-      '</div>';
-
-    list.insertAdjacentHTML('beforeend', newHtml);
-    count.textContent = parseInt(count.textContent) + 1;
     
-    // Animate in
-    setTimeout(() => {
-      const el = document.getElementById(newId);
-      if(el) {
-        el.classList.remove('opacity-0', 'translate-y-2');
+    const proj = window.appData.projects.find(p => p.id === window.currentProject) || window.appData.projects[0];
+    const projectTitle = proj ? proj.title : 'Boardnify Project';
+
+    // Disable button and show loading state
+    const originalText = sendBtn.innerText;
+    sendBtn.innerText = 'Sending...';
+    sendBtn.disabled = true;
+
+    try {
+      let uid = null;
+      if (window.supabaseClient) {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (user) uid = user.id;
+
+        // Insert invite directly into Supabase
+        const { data, error } = await window.supabaseClient
+          .from('client_invites')
+          .insert({
+            designer_id: uid,
+            client_email: email,
+            project_title: projectTitle,
+            project_desc: 'Invited via ' + roleLabel,
+            status: 'pending'
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Send magic link invite email to client
+        const { error: inviteError } = await window.supabaseClient.auth.signInWithOtp({
+          email: email,
+          options: {
+            emailRedirectTo: window.location.origin + '/client-accept.html?invite_id=' + data.id
+          }
+        });
+
+        if (inviteError) throw inviteError;
+      } else {
+        throw new Error('Supabase client not initialized');
       }
-    }, 50);
 
-    emailInput.value = '';
-    
-    // Trigger notification
-    if(window.triggerNotification) {
-      window.triggerNotification('invite', { email, role: roleLabel });
-    } else if (window.showToast) {
-      window.showToast(`Invitation sent to ${email}`);
+      const newId = 'collab-' + Date.now();
+      const newHtml = '<div class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-100 shadow-sm opacity-0 transform translate-y-2 transition-all duration-300" id="' + newId + '">' +
+          '<div class="flex items-center gap-3">' +
+            '<div class="relative">' +
+              '<div class="w-10 h-10 rounded-full bg-gradient-to-br ' + gradient + ' flex items-center justify-center text-white font-bold border border-gray-200 shadow-sm">' + avatarChar + '</div>' +
+              '<span class="absolute bottom-0 right-0 w-3 h-3 bg-yellow-400 border-2 border-white rounded-full" title="Pending Approval"></span>' +
+            '</div>' +
+            '<div>' +
+              '<h4 class="text-sm font-bold text-gray-800 truncate w-32">' + email + '</h4>' +
+              '<p class="text-xs text-yellow-600 font-medium">Pending Verify</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="flex items-center gap-2">' +
+            '<select class="text-xs bg-gray-50 border border-gray-200 rounded p-1 text-gray-600 outline-none focus:border-brand" onchange="window.showToast(\'Role updated successfully\')">' +
+              '<option value="client" ' + (roleRaw==='client'?'selected':'') + '>Client</option>' +
+              '<option value="client_team" ' + (roleRaw==='client_team'?'selected':'') + '>Client Team</option>' +
+              '<option value="designer" ' + (roleRaw==='designer'?'selected':'') + '>Designer</option>' +
+            '</select>' +
+            '<button class="text-gray-400 hover:text-red-500 p-1 smooth-transition" title="Cancel Invite" onclick="' +
+              'if(confirm(\'Cancel this invitation?\')) {' +
+                'document.getElementById(\'' + newId + '\').remove();' +
+                'document.getElementById(\'collab-count\').textContent = parseInt(document.getElementById(\'collab-count\').textContent) - 1;' +
+                'if(window.showToast) window.showToast(\'Invitation cancelled\');' +
+              '}' +
+            '">' +
+              '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+
+      list.insertAdjacentHTML('beforeend', newHtml);
+      count.textContent = parseInt(count.textContent) + 1;
+      
+      // Animate in
+      setTimeout(() => {
+        const el = document.getElementById(newId);
+        if(el) {
+          el.classList.remove('opacity-0', 'translate-y-2');
+        }
+      }, 50);
+
+      emailInput.value = '';
+      
+      // Trigger notification
+      if (window.showToast) {
+        window.showToast(`Secure invitation sent to ${email}`, 'success');
+      }
+
+    } catch (err) {
+      console.error(err);
+      if (window.showToast) window.showToast(err.message, 'error');
+    } finally {
+      sendBtn.innerText = originalText;
+      sendBtn.disabled = false;
     }
-
   });
 };

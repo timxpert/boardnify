@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boardnify - Accept Invitation</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #7C6FF7;
+      --brand-light: #EDE9FE;
+      --brand-dark: #6a5de8;
+      --bg: #F0EFED;
+      --surface: #FFFFFF;
+      --surface2: #F9F9F8;
+      --border: #E2E0DC;
+      --text: #1A1916;
+      --text-muted: #A09D98;
+      --error: #EF4444;
+      --success: #22C55E;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      background-image: radial-gradient(#D5D3D1 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card {
+      position: relative; z-index: 1; width: 100%; max-width: 440px; margin: 1rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 48px 40px; text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .logo { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--brand); border-radius: 8px; font-family: 'Cabinet Grotesk', sans-serif; font-weight: 800; font-size: 20px; color: white; margin-bottom: 28px; }
+    .heading { font-family: 'Cabinet Grotesk', sans-serif; font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; margin-bottom: 8px; }
+    .subheading { font-size: 14px; font-weight: 500; color: var(--text-muted); margin-bottom: 32px; line-height: 1.6; }
+    
+    .project-details { background: var(--surface2); padding: 24px; border-radius: 10px; margin-bottom: 32px; text-align: left; border: 1px solid var(--border); }
+    .label { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .value { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+    .value:last-child { margin-bottom: 0; }
+    
+    .btn {
+      width: 100%; padding: 14px; background: var(--brand); border: none; border-radius: 8px;
+      color: white; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; margin-bottom: 12px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-decline {
+      width: 100%; padding: 14px; background: transparent; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-decline:hover { background: var(--surface2); color: var(--text); }
+
+    .loader {
+      display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border);
+      border-top-color: var(--brand); border-radius: 50%; animation: spin 1s linear infinite; margin: 40px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .hidden { display: none !important; }
+
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="bg-grid"></div>
+
+  <div class="card" id="invite-card">
+    <div class="logo">B</div>
+    
+    <div id="loading-state">
+      <div class="loader"></div>
+      <div class="heading">Loading Invitation...</div>
+    </div>
+
+    <div id="error-state" class="hidden">
+      <h1 class="heading" style="color: var(--error);">Invitation Not Found</h1>
+      <p class="subheading">This link may have expired or is invalid. Please contact the person who invited you for a new link.</p>
+    </div>
+
+    <div id="success-state" class="hidden">
+      <h1 class="heading">You've been invited!</h1>
+      <p class="subheading">You have been invited to collaborate on a new project inside Boardnify.</p>
+      
+      <div class="project-details">
+        <div class="label">Project Title</div>
+        <div class="value" id="disp-title">Brand Anthem</div>
+        
+        <div class="label">Role Description</div>
+        <div class="value" id="disp-desc">Client Reviewer</div>
+        
+        <div class="label">Invited by</div>
+        <div class="value" id="disp-email">designer@agency.com</div>
+      </div>
+      
+      <button class="btn" id="accept-btn" onclick="handleAccept()">Accept Invitation</button>
+      <button class="btn-decline" id="decline-btn" onclick="handleDecline()">Decline</button>
+    </div>
+
+    <div id="done-state" class="hidden">
+      <h1 class="heading" id="done-heading" style="color: var(--success);">Accepted!</h1>
+      <p class="subheading" id="done-subheading">Redirecting you to the dashboard...</p>
+    </div>
+
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://mazkugyfjwubsfgcedfl.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hemt1Z3lmand1YnNmZ2NlZGZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NjY4OTEsImV4cCI6MjA4OTI0Mjg5MX0.vKSTWea3-KpRCPEXvY46kf_Dj85TKNgFZ3noGrn4ztI';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteId = urlParams.get('invite_id');
+
+    async function loadInvite() {
+      if (!inviteId) {
+        showState('error-state');
+        return;
+      }
+
+      try {
+        const { data, error } = await sb.from('client_invites').select('*').eq('id', inviteId).single();
+        if (error || !data) throw new Error('Invite not found');
+        
+        if (data.status !== 'pending') {
+          document.getElementById('done-heading').textContent = data.status === 'approved' ? 'Already Accepted' : 'Already Declined';
+          document.getElementById('done-heading').style.color = data.status === 'approved' ? 'var(--success)' : 'var(--text-muted)';
+          document.getElementById('done-subheading').textContent = 'This invitation has already been processed.';
+          if (data.status === 'approved') {
+             setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+          }
+          showState('done-state');
+          return;
+        }
+
+        document.getElementById('disp-title').textContent = data.project_title;
+        document.getElementById('disp-desc').textContent = data.project_desc || 'No description provided';
+        document.getElementById('disp-email').textContent = data.designer_name || 'System Designer'; 
+        
+        window.inviteData = data;
+        showState('success-state');
+      } catch (err) {
+        console.error(err);
+        showState('error-state');
+      }
+    }
+
+    async function handleAccept() {
+      setLoading(true);
+      const { error } = await sb.from('client_invites').update({ status: 'approved' }).eq('id', inviteId);
+      if (error) {
+        alert('Failed to accept: ' + error.message);
+        setLoading(false);
+        return;
+      }
+      showState('done-state');
+      setTimeout(() => { window.location.href = 'index.html?role=client&client=' + encodeURIComponent(window.inviteData.project_title); }, 1500);
+    }
+
+    async function handleDecline() {
+      setLoading(true);
+      const { error } = await sb.from('client_invites').update({ status: 'declined' }).eq('id', inviteId);
+      if (error) {
+        alert('Failed to decline: ' + error.message);
+        setLoading(false);
+        return;
+      }
+      document.getElementById('done-heading').textContent = 'Declined';
+      document.getElementById('done-heading').style.color = 'var(--text-muted)';
+      document.getElementById('done-subheading').textContent = 'Thank you, we have let the sender know.';
+      showState('done-state');
+    }
+
+    function showState(stateId) {
+      ['loading-state', 'error-state', 'success-state', 'done-state'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(stateId).classList.remove('hidden');
+    }
+
+    function setLoading(isLoading) {
+      document.getElementById('accept-btn').disabled = isLoading;
+      document.getElementById('decline-btn').disabled = isLoading;
+      document.getElementById('accept-btn').style.opacity = isLoading ? '0.5' : '1';
+    }
+
+    // Initialize
+    loadInvite();
+  </script>
+</body>
+</html>

@@ -2,7 +2,14 @@
 // Centralized configuration for the Boardnify API.
 // Fallback to localhost:3000 for local development.
 
-const BASE_URL = 'https://boardnify-backend.onrender.com';
+let BASE_URL = '';
+if (typeof window !== 'undefined') {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    BASE_URL = 'http://localhost:3000';
+  } else {
+    BASE_URL = ''; // Relative path on Vercel serves via same domain
+  }
+}
 
 // Attach BASE_URL to window if in a browser context for global access
 if (typeof window !== 'undefined') {

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boardnify - Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand: #7C6FF7;
+      --brand-light: #EDE9FE;
+      --brand-dark: #6a5de8;
+      --bg: #F0EFED;
+      --surface: #FFFFFF;
+      --surface2: #F9F9F8;
+      --border: #E2E0DC;
+      --text: #1A1916;
+      --text-muted: #A09D98;
+      --error: #EF4444;
+      --success: #22C55E;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      background-image: radial-gradient(#D5D3D1 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card {
+      position: relative; z-index: 1; width: 100%; max-width: 400px; margin: 1rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--brand);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      color: white;
+    }
+    .logo-text {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+
+    .heading {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+    .subheading {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active {
+      color: var(--brand);
+      border-bottom-color: var(--brand);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    input:focus {
+      border-color: var(--brand);
+      background: var(--surface);
+      box-shadow: 0 0 0 4px rgba(124,111,247,0.1);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--brand);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #google-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: white;
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      margin-bottom: 24px;
+      transition: all 0.2s;
+    }
+    #google-btn:hover { background: var(--surface2); }
+
+    .alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .alert.error { background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; }
+    .alert.success { background: #DCFCE7; color: #16A34A; border: 1px solid #86EFAC; }
+    .alert.show { display: block; }
+
+    .forgot {
+      text-align: right; margin-top: -12px; margin-bottom: 20px;
+    }
+    .forgot a {
+      font-size: 12px;
+      color: var(--brand);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-top: 32px;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="bg-grid"></div>
+
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">B</div>
+      <span class="logo-text">Boardnify</span>
+    </div>
+
+    <h1 class="heading">Welcome back</h1>
+    <p class="subheading">Sign in to your creative workspace.</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab" onclick="switchTab('signup')">Create Account</button>
+    </div>
+
+    <button id="google-btn" onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white text-gray-800 font-bold py-3 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition mb-4">
+      <img src="https://www.google.com/favicon.ico" width="18" height="18"> Continue with Google
+    </button>
+
+    <div id="alert-box" class="alert"></div>
+
+    <!-- LOGIN PANEL -->
+    <div id="panel-login" class="panel active">
+      <div class="form-group">
+        <label for="login-email">Email Address</label>
+        <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="forgot"><a href="#" onclick="handleForgotPassword()">Forgot password?</a></div>
+      <button class="btn" id="login-btn" onclick="handleLogin()">Sign In</button>
+    </div>
+
+    <!-- SIGNUP PANEL -->
+    <div id="panel-signup" class="panel">
+      <div class="form-group">
+        <label for="signup-name">Full Name</label>
+        <input type="text" id="signup-name" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label for="signup-email">Email Address</label>
+        <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" placeholder="Min. 6 characters" autocomplete="new-password">
+      </div>
+      <button class="btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
+    </div>
+
+    <div class="footer-note">Boardnify &copy; 2026 &mdash; Creative Collaboration Platform</div>
+  </div>
+
+  <script>
+    // ─── Supabase Init ───────────────────────────────────────────────
+    const SUPABASE_URL = 'https://mazkugyfjwubsfgcedfl.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hemt1Z3lmand1YnNmZ2NlZGZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NjY4OTEsImV4cCI6MjA4OTI0Mjg5MX0.vKSTWea3-KpRCPEXvY46kf_Dj85TKNgFZ3noGrn4ztI';
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ─── Redirect if already logged in ──────────────────────────────
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) window.location.href = 'index.html';
+    })();
+
+    // ─── Tab switching ───────────────────────────────────────────────
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'signup' && i === 1));
+      });
+      document.getElementById('panel-login').classList.toggle('active', tab === 'login');
+      document.getElementById('panel-signup').classList.toggle('active', tab === 'signup');
+      hideAlert();
+    }
+
+    // ─── Alert helpers ───────────────────────────────────────────────
+    function showAlert(msg, type = 'error') {
+      const el = document.getElementById('alert-box');
+      el.textContent = msg;
+      el.className = `alert ${type} show`;
+    }
+    function hideAlert() {
+      document.getElementById('alert-box').className = 'alert';
+    }
+
+    // ─── Set button loading state ────────────────────────────────────
+    function setLoading(btnId, loading, defaultText) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.innerHTML = loading
+        ? `<span class="btn-spinner"></span> Please wait...`
+        : defaultText;
+    }
+
+    // ─── Login ───────────────────────────────────────────────────────
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      hideAlert();
+
+      if (!email || !password) return showAlert('Please enter your email and password.');
+
+      setLoading('login-btn', true, 'Sign In');
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      setLoading('login-btn', false, 'Sign In');
+
+      if (error) return showAlert(error.message);
+      window.location.href = 'index.html';
+    }
+
+    // ─── Sign Up ─────────────────────────────────────────────────────
+    async function handleSignup() {
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      hideAlert();
+
+      if (!name || !email || !password) return showAlert('Please fill in all fields.');
+      if (password.length < 6) return showAlert('Password must be at least 6 characters.');
+
+      setLoading('signup-btn', true, 'Create Account');
+      const { error } = await sb.auth.signUp({
+        email, password,
+        options: { data: { full_name: name } }
+      });
+      setLoading('signup-btn', false, 'Create Account');
+
+      if (error) return showAlert(error.message);
+      showAlert('Account created! Check your email to confirm, then sign in.', 'success');
+    }
+
+    // ─── Forgot Password ─────────────────────────────────────────────
+    async function handleForgotPassword() {
+      const email = document.getElementById('login-email').value.trim();
+      if (!email) return showAlert('Enter your email above first, then click Forgot Password.');
+
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/login.html'
+      });
+      if (error) return showAlert(error.message);
+      showAlert('Password reset email sent! Check your inbox.', 'success');
+    }
+
+    // ─── Google OAuth ────────────────────────────────────────────────
+    async function handleGoogleLogin() {
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/index.html'
+        }
+      });
+      if (error) showAlert(error.message);
+    }
+
+    // ─── Enter key support ───────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const loginActive = document.getElementById('panel-login').classList.contains('active');
+      if (loginActive) handleLogin();
+      else handleSignup();
+    });
+  </script>
+</body>
+</html>
+

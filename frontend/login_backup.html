@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boardnify - Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+        (async () => {
+            const SUPABASE_URL = 'https://mazkugyfjwubsfgcedfl.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_2idDYaLgKe7hsuUCSz_W0w_JlhVvmp8';
+            const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) window.location.href = 'login.html';
+        })();
+
+    </script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --brand: #F97316;
+            --brand-light: #FED7AA;
+            --brand-dark: #EA580C;
+            --bg: #0F0F0F;
+            --surface: #1A1A1A;
+            --surface2: #242424;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #F5F5F5;
+            --text-muted: #888;
+            --error: #EF4444;
+            --success: #22C55E;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated background */
+        .bg-glow {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-glow::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(ellipse, rgba(249, 115, 22, 0.12) 0%, transparent 70%);
+            animation: drift1 8s ease-in-out infinite alternate;
+        }
+
+        .bg-glow::after {
+            content: '';
+            position: absolute;
+            bottom: -20%;
+            right: -10%;
+            width: 50%;
+            height: 50%;
+            background: radial-gradient(ellipse, rgba(249, 115, 22, 0.07) 0%, transparent 70%);
+            animation: drift2 10s ease-in-out infinite alternate;
+        }
+
+        @keyframes drift1 {
+            from {
+                transform: translate(0, 0);
+            }
+
+            to {
+                transform: translate(5%, 8%);
+            }
+        }
+
+        @keyframes drift2 {
+            from {
+                transform: translate(0, 0);
+            }
+
+            to {
+                transform: translate(-5%, -6%);
+            }
+        }
+
+        /* Grid texture */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            margin: 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 48px 40px;
+            box-shadow:
+                0 0 0 1px rgba(249, 115, 22, 0.06),
+                0 32px 80px rgba(0, 0, 0, 0.5),
+                0 0 60px rgba(249, 115, 22, 0.04);
+            animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 36px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--brand);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 20px;
+            color: white;
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.35);
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            color: var(--text);
+            letter-spacing: -0.5px;
+        }
+
+        .heading {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+
+        .subheading {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 28px;
+            gap: 4px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            background: transparent;
+            border-radius: 9px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #aaa;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 16px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+        }
+
+        input::placeholder {
+            color: #555;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--brand);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            background: var(--brand-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.35);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 18px;
+            display: none;
+        }
+
+        .alert.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #FCA5A5;
+        }
+
+        .alert.success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            color: #86EFAC;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .forgot {
+            text-align: right;
+            margin-top: -10px;
+            margin-bottom: 18px;
+        }
+
+        .forgot a {
+            font-size: 12px;
+            color: var(--brand);
+            text-decoration: none;
+            font-weight: 600;
+            opacity: 0.85;
+        }
+
+        .forgot a:hover {
+            opacity: 1;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            color: #444;
+            font-size: 12px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 12px;
+            color: #555;
+            margin-top: 24px;
+        }
+
+        /* Panel toggle */
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-glow"></div>
+    <div class="bg-grid"></div>
+
+    <div class="card">
+        <div class="logo">
+            <div class="logo-icon">B</div>
+            <span class="logo-text">Boardnify</span>
+        </div>
+
+        <h1 class="heading">Welcome back</h1>
+        <p class="subheading">Sign in to your creative workspace.</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('login')">Sign In</button>
+            <button class="tab" onclick="switchTab('signup')">Create Account</button>
+        </div>
+
+        <div id="alert-box" class="alert"></div>
+
+        <!-- LOGIN PANEL -->
+        <div id="panel-login" class="panel active">
+            <div class="form-group">
+                <label for="login-email">Email Address</label>
+                <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div class="forgot"><a href="#" onclick="handleForgotPassword()">Forgot password?</a></div>
+            <button class="btn" id="login-btn" onclick="handleLogin()">Sign In</button>
+        </div>
+
+        <!-- SIGNUP PANEL -->
+        <div id="panel-signup" class="panel">
+            <div class="form-group">
+                <label for="signup-name">Full Name</label>
+                <input type="text" id="signup-name" placeholder="Your name" autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="signup-email">Email Address</label>
+                <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password" placeholder="Min. 6 characters" autocomplete="new-password">
+            </div>
+            <button class="btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
+        </div>
+
+        <div class="footer-note">Boardnify &copy; 2026 &mdash; Creative Collaboration Platform</div>
+    </div>
+
+    <script>
+        // ─── Supabase Init ───────────────────────────────────────────────
+        const SUPABASE_URL = 'https://mazkugyfjwubsfgcedfl.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_2idDYaLgKe7hsuUCSz_W0w_JlhVvmp8';
+        const { createClient } = supabase;
+        const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ─── Redirect if already logged in ──────────────────────────────
+        (async () => {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) window.location.href = 'index.html';
+        })();
+
+        // ─── Tab switching ───────────────────────────────────────────────
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'signup' && i === 1));
+            });
+            document.getElementById('panel-login').classList.toggle('active', tab === 'login');
+            document.getElementById('panel-signup').classList.toggle('active', tab === 'signup');
+            hideAlert();
+        }
+
+        // ─── Alert helpers ───────────────────────────────────────────────
+        function showAlert(msg, type = 'error') {
+            const el = document.getElementById('alert-box');
+            el.textContent = msg;
+            el.className = `alert ${type} show`;
+        }
+        function hideAlert() {
+            document.getElementById('alert-box').className = 'alert';
+        }
+
+        // ─── Set button loading state ────────────────────────────────────
+        function setLoading(btnId, loading, defaultText) {
+            const btn = document.getElementById(btnId);
+            btn.disabled = loading;
+            btn.innerHTML = loading
+                ? `<span class="btn-spinner"></span> Please wait...`
+                : defaultText;
+        }
+
+        // ─── Login ───────────────────────────────────────────────────────
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            hideAlert();
+
+            if (!email || !password) return showAlert('Please enter your email and password.');
+
+            setLoading('login-btn', true, 'Sign In');
+            const { error } = await sb.auth.signInWithPassword({ email, password });
+            setLoading('login-btn', false, 'Sign In');
+
+            if (error) return showAlert(error.message);
+            window.location.href = 'index.html';
+        }
+
+        // ─── Sign Up ─────────────────────────────────────────────────────
+        async function handleSignup() {
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            hideAlert();
+
+            if (!name || !email || !password) return showAlert('Please fill in all fields.');
+            if (password.length < 6) return showAlert('Password must be at least 6 characters.');
+
+            setLoading('signup-btn', true, 'Create Account');
+            const { error } = await sb.auth.signUp({
+                email, password,
+                options: { data: { full_name: name } }
+            });
+            setLoading('signup-btn', false, 'Create Account');
+
+            if (error) return showAlert(error.message);
+            showAlert('Account created! Check your email to confirm, then sign in.', 'success');
+        }
+
+        // ─── Forgot Password ─────────────────────────────────────────────
+        async function handleForgotPassword() {
+            const email = document.getElementById('login-email').value.trim();
+            if (!email) return showAlert('Enter your email above first, then click Forgot Password.');
+
+            const { error } = await sb.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/login.html'
+            });
+            if (error) return showAlert(error.message);
+            showAlert('Password reset email sent! Check your inbox.', 'success');
+        }
+
+        // ─── Enter key support ───────────────────────────────────────────
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            const loginActive = document.getElementById('panel-login').classList.contains('active');
+            if (loginActive) handleLogin();
+            else handleSignup();
+        });
+    </script>
+</body>
+
+</html>
