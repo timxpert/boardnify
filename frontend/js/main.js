@@ -72,7 +72,7 @@ window.navigate = function(route, projectId = null, skipHash = false) {
     app.innerHTML = `
       <div class="view-container animate-pulse p-10 space-y-8">
         <div class="h-12 w-1/3 bg-gray-100 rounded-xl"></div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 gap-6">
           <div class="h-64 bg-gray-50 rounded-2xl"></div>
           <div class="h-64 bg-gray-50 rounded-2xl"></div>
           <div class="h-64 bg-gray-50 rounded-2xl"></div>

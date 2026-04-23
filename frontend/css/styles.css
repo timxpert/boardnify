@@ -42,15 +42,15 @@ body {
 }
 
 /* Typography System */
-.text-h1 { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
-.card-title { font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--text-main); }
-.card-body { font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--text-main); }
-.card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tiny); }
+.text-h1 { font-size: 1.125rem; font-weight: 700; letter-spacing: -0.01em; }
+.card-title { font-size: 1rem; font-weight: 500; line-height: 1.4; color: var(--text-main); }
+.card-body { font-size: 0.875rem; font-weight: 400; line-height: 1.5; color: var(--text-main); }
+.card-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tiny); }
 
 /* Sidebar Tools */
 .nav-link {
-  width: 36px;
-  height: 36px;
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,7 +62,7 @@ body {
   position: relative;
 }
 
-.nav-link:hover {
+.nav-link:active {
   background-color: #E8E6E4;
   color: var(--text-main);
 }
@@ -70,27 +70,6 @@ body {
 .nav-link.active {
   background-color: var(--brand);
   color: white;
-}
-
-/* Tooltip */
-.nav-link[data-label]::after {
-  content: attr(data-label);
-  position: absolute;
-  left: 48px;
-  background: #1A1916;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-  z-index: 1000;
-}
-
-.nav-link:hover::after {
-  opacity: 1;
 }
 
 /* Moodboard Canvas Styles */
@@ -410,9 +389,7 @@ body {
   opacity: 1;
 }
 
-/* Mobile Overrides */
-@media (max-width: 768px) {
-  /* Kill desktop canvas transform and infinite scrolling */
+/* Mobile Overrides (Now Default) */
   #moodboard-canvas {
     width: 100% !important;
     height: auto !important;
@@ -543,7 +520,6 @@ body {
     display: flex;
     flex-direction: column;
   }
-}
 
 .m-card-inner {
   pointer-events: none; /* Prevents inner content blocking resize handles */

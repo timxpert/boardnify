@@ -64,8 +64,8 @@
     if(!profilePopover) return;
     profilePopover.classList.remove('hidden');
     setTimeout(() => {
-      profilePopoverContent.classList.remove('scale-95', 'opacity-0');
-      profilePopoverContent.classList.add('scale-100', 'opacity-100');
+      profilePopoverContent.classList.remove('translate-y-full', 'opacity-0');
+      profilePopoverContent.classList.add('translate-y-0', 'opacity-100');
     }, 10);
 
     if (window.supabaseClient) {
@@ -86,8 +86,8 @@
 
   const closePopover = () => {
     if(!profilePopoverContent) return;
-    profilePopoverContent.classList.add('scale-95', 'opacity-0');
-    profilePopoverContent.classList.remove('scale-100', 'opacity-100');
+    profilePopoverContent.classList.add('translate-y-full', 'opacity-0');
+    profilePopoverContent.classList.remove('translate-y-0', 'opacity-100');
     setTimeout(() => profilePopover.classList.add('hidden'), 300);
   };
 
@@ -98,8 +98,8 @@
     settingsModal.classList.add('flex');
     setTimeout(() => {
       settingsModal.classList.add('opacity-100');
-      settingsContent.classList.remove('scale-95', 'opacity-0');
-      settingsContent.classList.add('scale-100', 'opacity-100');
+      settingsContent.classList.remove('translate-y-full', 'opacity-0');
+      settingsContent.classList.add('translate-y-0', 'opacity-100');
     }, 10);
 
     // Populate Fields
@@ -126,8 +126,8 @@
   const closeSettings = () => {
     if(!settingsContent) return;
     settingsModal.classList.remove('opacity-100');
-    settingsContent.classList.add('scale-95', 'opacity-0');
-    settingsContent.classList.remove('scale-100', 'opacity-100');
+    settingsContent.classList.add('translate-y-full', 'opacity-0');
+    settingsContent.classList.remove('translate-y-0', 'opacity-100');
     setTimeout(() => {
       settingsModal.classList.add('hidden');
       settingsModal.classList.remove('flex');

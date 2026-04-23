@@ -140,7 +140,7 @@ window.initMotionProjects = function(container, socket, projectId) {
             </button>
           </div>
         </header>
-        <div id="mp-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div id="mp-grid-container" class="grid grid-cols-1 gap-8">
           <!-- Cards Injected via JS -->
         </div>
       </div>
@@ -157,7 +157,7 @@ window.initMotionProjects = function(container, socket, projectId) {
           <button id="mp-close-modal" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-white rounded-full smooth-transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
         </div>
         <div class="p-8 flex flex-col gap-6">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 gap-4">
              <div>
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Project Title</label>
                 <input type="text" id="mp-new-title" class="w-full p-3 bg-bg-canvas border border-border-light rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-brand smooth-transition" placeholder="e.g. Q3 Explainer Video">
@@ -172,7 +172,7 @@ window.initMotionProjects = function(container, socket, projectId) {
              </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 gap-4">
              <div>
                 <label class="block text-xs font-bold text-text-muted uppercase tracking-widest mb-2">Aspect Ratio</label>
                 <select id="mp-new-aspect" class="w-full p-3 bg-bg-canvas border border-border-light rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-brand smooth-transition font-bold text-text-dark">
