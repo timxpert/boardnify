@@ -35,6 +35,9 @@
         body {
             font-family: 'DM Sans', sans-serif;
             color: var(--text-dark);
+            background-color: #F9F9F8;
+        }
+        .mobile-shell {
             background-color: #FFFFFF;
             background-image: var(--bg-dots);
             background-size: 40px 40px;
@@ -192,45 +195,42 @@
         .btn-brand:active { transform: translateY(0); }
     </style>
 </head>
-<body class="overflow-x-hidden">
+<body class="overflow-x-hidden text-[16px]">
+<div class="w-full max-w-[430px] mx-auto mobile-shell min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] flex flex-col">
 
     <!-- Navigation -->
-    <nav class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <nav class="px-5 h-20 flex items-center justify-between shrink-0">
         <div class="flex items-center gap-2">
             <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold">B</div>
             <span class="text-xl font-bold tracking-tight">Boardnify</span>
         </div>
-        <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-500">
-            <a href="#features" class="hover:text-black transition">Product</a>
-            <a href="#" class="hover:text-black transition">Templates</a>
-            <a href="#" class="hover:text-black transition">Pricing</a>
-        </div>
-        <div class="flex items-center gap-4">
-            <button id="nav-login-btn" class="text-sm font-bold hover:text-brand transition">Log in</button>
-            <button onclick="revealAuth('signup')" class="px-6 py-2.5 bg-brand text-white text-sm font-bold rounded-full hover:bg-brand-dark transition shadow-lg shadow-brand/20">Sign up for free</button>
+        <div class="flex items-center gap-3">
+            <button id="nav-login-btn" class="text-[13px] font-bold hover:text-brand transition p-2 min-h-[44px]">Log in</button>
+            <button onclick="revealAuth('signup')" class="px-5 py-2 min-h-[44px] bg-brand text-white text-[13px] font-bold rounded-full hover:bg-brand-dark transition shadow-lg shadow-brand/20">Sign up</button>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="max-w-7xl mx-auto px-6 pt-20 md:pt-40 pb-20 md:pb-32 text-center hero-dots overflow-hidden">
-        <div class="max-w-5xl mx-auto">
-            <h1 class="text-5xl md:text-9xl font-medium leading-[0.9] mb-8 md:mb-10">Your creative workspace, <span class="text-brand">reimagined.</span></h1>
-            <p class="text-lg md:text-2xl text-gray-400 mb-12 md:text-16 md:mb-16 max-w-3xl mx-auto leading-relaxed font-medium">
+    <section class="px-5 pt-16 pb-16 text-center hero-dots overflow-hidden">
+        <div>
+            <h1 class="text-5xl font-medium leading-[0.9] mb-6">Your creative workspace, <span class="text-brand">reimagined.</span></h1>
+            <p class="text-lg text-gray-500 mb-10 leading-relaxed font-medium">
                 From ideation to final delivery, collaborate with your team and clients in one visual workspace. No more scattered tools, broken feedback threads, or lost files.
             </p>
             
             <!-- Hero Choice Buttons -->
-            <div id="hero-auth-choices" class="flex flex-col sm:flex-row items-center justify-center gap-6">
-                 <button onclick="revealAuth('signup')" class="w-full sm:w-auto px-12 py-6 bg-brand text-white text-base font-bold rounded-2xl hover:opacity-90 transition-all shadow-[0_8px_30px_rgb(124,111,247,0.3)] hover:scale-[1.05] active:scale-[0.98]">Sign up for free</button>
-                 <button onclick="revealAuth('signin')" class="w-full sm:w-auto px-12 py-6 bg-white border-2 border-gray-100 text-text-dark text-base font-bold rounded-2xl hover:border-brand transition-all hover:scale-[1.05] active:scale-[0.98]">Log in</button>
+            <div id="hero-auth-choices" class="flex flex-col gap-4">
+                 <button onclick="revealAuth('signup')" class="w-full px-8 py-4 bg-brand text-white text-base font-bold rounded-2xl hover:opacity-90 transition-all shadow-[0_8px_30px_rgb(124,111,247,0.3)] active:scale-[0.98] min-h-[56px]">Sign up for free</button>
+                 <button onclick="revealAuth('signin')" class="w-full px-8 py-4 bg-white border-2 border-gray-100 text-text-dark text-base font-bold rounded-2xl transition-all active:scale-[0.98] min-h-[56px]">Log in</button>
             </div>
         </div>
 
         <!-- Auth Portal Overlay -->
-        <div id="auth-portal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-6 bg-[#F0EFED]/80 backdrop-blur-3xl opacity-0 smooth-transition overflow-y-auto">
-            <div id="auth-card" class="auth-card transform scale-90 transition-all duration-300 relative my-auto max-h-full overflow-y-auto">
-                <button onclick="closeAuth()" class="absolute top-6 right-6 md:top-8 md:right-8 text-gray-300 hover:text-text-dark transition">
-                    <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <div id="auth-portal" class="hidden fixed inset-0 z-[1000] flex items-end justify-center p-0 bg-[#F0EFED]/80 backdrop-blur-md opacity-0 smooth-transition overflow-y-auto max-w-[430px] mx-auto">
+            <div id="auth-card" class="auth-card transform translate-y-full transition-all duration-300 relative w-full rounded-b-none max-h-[90vh] overflow-y-auto shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+                <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+                <button onclick="closeAuth()" class="absolute top-6 right-6 text-gray-400 transition min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
 
                 <div id="auth-loading" class="hidden flex flex-col items-center justify-center py-20">
@@ -292,129 +292,131 @@
     </section>
 
     <!-- Primary Features Section -->
-    <section class="max-w-7xl mx-auto px-6 py-20 md:py-32 space-y-24 md:space-y-40">
+    <section class="px-5 py-12 space-y-20">
         <!-- Project Board -->
-        <div class="grid md:grid-cols-2 gap-16 md:gap-24 items-center">
+        <div class="flex flex-col gap-8 text-center">
             <div>
-                <h2 class="text-3xl md:text-5xl font-bold mb-6 md:mb-8 leading-tight">Create your project board.</h2>
-                <p class="text-lg md:text-xl text-gray-500 leading-relaxed">
+                <h2 class="text-3xl font-bold mb-4 leading-tight">Create your project board.</h2>
+                <p class="text-lg text-gray-500 leading-relaxed">
                     Set up your workspace with moodboards, styleframes, scripts, and tasks — all in one place.
                 </p>
             </div>
-            <div class="relative bg-gray-50 rounded-3xl md:rounded-[40px] p-6 md:p-8 notion-card">
+            <div class="relative bg-gray-50 rounded-3xl p-5 notion-card">
                  <img src="boardnify_notion_moodboard_illustration_1775901836899.png" class="w-full float-anim" alt="Project Board">
             </div>
         </div>
 
         <!-- Client Invite -->
-        <div class="grid md:grid-cols-2 gap-16 md:gap-24 items-center">
-            <div class="order-2 md:order-1 relative bg-gray-50 rounded-3xl md:rounded-[40px] p-6 md:p-8 notion-card">
-                 <img src="boardnify_notion_collaboration_illustration_1775901872263.png" class="w-full float-anim" alt="Client Invite">
-            </div>
-            <div class="order-1 md:order-2">
-                <h2 class="text-3xl md:text-5xl font-bold mb-6 md:mb-8 leading-tight">Invite your client via email.</h2>
-                <p class="text-lg md:text-xl text-gray-500 leading-relaxed">
+        <div class="flex flex-col gap-8 text-center">
+            <div>
+                <h2 class="text-3xl font-bold mb-4 leading-tight">Invite your client via email.</h2>
+                <p class="text-lg text-gray-500 leading-relaxed">
                     No account needed for clients. Share a link and they're in — ready to review and comment instantly.
                 </p>
+            </div>
+            <div class="relative bg-gray-50 rounded-3xl p-5 notion-card">
+                 <img src="boardnify_notion_collaboration_illustration_1775901872263.png" class="w-full float-anim" alt="Client Invite">
             </div>
         </div>
 
         <!-- Real-time Feedback -->
-        <div class="grid md:grid-cols-2 gap-16 md:gap-24 items-center">
+        <div class="flex flex-col gap-8 text-center">
             <div>
-                <h2 class="text-3xl md:text-5xl font-bold mb-6 md:mb-8 leading-tight">Collect feedback in real time.</h2>
-                <p class="text-lg md:text-xl text-gray-500 leading-relaxed">
+                <h2 class="text-3xl font-bold mb-4 leading-tight">Collect feedback in real time.</h2>
+                <p class="text-lg text-gray-500 leading-relaxed">
                     Clients leave voice or text comments directly on the relevant section. No email chains.
                 </p>
             </div>
-            <div class="px-8 py-12 md:px-12 md:py-16 bg-brand/5 rounded-3xl md:rounded-[40px] text-center border border-brand/10">
-                <div class="w-16 h-16 md:w-20 md:h-20 bg-brand text-white rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-xl">
-                    <svg class="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+            <div class="px-6 py-10 bg-brand/5 rounded-3xl text-center border border-brand/10">
+                <div class="w-16 h-16 bg-brand text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                 </div>
-                <p class="text-xl md:text-2xl font-bold text-brand">Direct Feedback Loop</p>
+                <p class="text-xl font-bold text-brand">Direct Feedback Loop</p>
             </div>
         </div>
 
         <!-- Direct Delivery -->
-        <div class="grid md:grid-cols-2 gap-16 md:gap-24 items-center">
-            <div class="relative bg-gray-50 rounded-3xl md:rounded-[40px] p-6 md:p-8 notion-card order-2 md:order-1">
-                <div class="p-6 md:p-8 bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm">
-                    <div class="flex items-center justify-between mb-4 md:mb-6">
-                        <span class="text-[10px] md:text-xs font-black uppercase tracking-widest text-brand">Final_Delivery.mp4</span>
-                        <span class="text-[9px] md:text-[10px] font-bold text-gray-300">248 MB</span>
+        <div class="flex flex-col gap-8 text-center">
+            <div>
+                <h2 class="text-3xl font-bold mb-4 leading-tight">Deliver the final video.</h2>
+                <p class="text-lg text-gray-500 leading-relaxed">
+                    Clients download their final video straight from the board. No WeTransfer, no Dropbox, No google drive links.
+                </p>
+            </div>
+            <div class="relative bg-gray-50 rounded-3xl p-5 notion-card">
+                <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-brand">Final_Delivery.mp4</span>
+                        <span class="text-[9px] font-bold text-gray-300">248 MB</span>
                     </div>
-                    <div class="w-full h-1.5 md:h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div class="w-full h-full bg-brand"></div>
                     </div>
                 </div>
             </div>
-            <div class="order-1 md:order-2">
-                <h2 class="text-3xl md:text-5xl font-bold mb-6 md:mb-8 leading-tight">Deliver the final video.</h2>
-                <p class="text-lg md:text-xl text-gray-500 leading-relaxed">
-                    Clients download their final video straight from the board. No WeTransfer, no Dropbox, No google drive links.
-                </p>
-            </div>
         </div>
     </section>
 
-    <!-- Project Organization (Preserved) -->
-    <section class="max-w-7xl mx-auto px-6 py-20 md:py-32 bg-[#F9F9F8] rounded-3xl md:rounded-[64px] mb-20 md:mb-32 overflow-hidden text-center">
-        <div class="flex flex-col items-center mb-12 md:mb-20">
-             <h2 class="text-4xl md:text-6xl font-bold mb-6 md:mb-8">One home for every project.</h2>
-             <p class="text-lg md:text-xl text-gray-500 max-w-2xl font-medium">
+    <!-- Project Organization -->
+    <section class="px-5 py-16 bg-[#F9F9F8] rounded-3xl mx-5 mb-16 overflow-hidden text-center">
+        <div class="flex flex-col items-center mb-10">
+             <h2 class="text-3xl font-bold mb-4">One home for every project.</h2>
+             <p class="text-lg text-gray-500 max-w-2xl font-medium">
                 Stop hunting through folders. Every client, Every brief, Every script. Neatly organized in a spatial workspace designed for clarity.
              </p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-            <div class="bg-white p-8 md:p-12 rounded-3xl md:rounded-[40px] notion-card text-center">
-                <div class="w-14 h-14 md:w-16 md:h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 md:mb-8 text-brand">
-                    <svg class="w-7 h-7 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m4 0h1m-5 4h1m4 0h1m-5 4h1m4 0h1"></path></svg>
+        <div class="flex flex-col gap-6">
+            <div class="bg-white p-8 rounded-3xl notion-card text-center">
+                <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m4 0h1m-5 4h1m4 0h1m-5 4h1m4 0h1"></path></svg>
                 </div>
-                <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">Client Dashboards</h3>
-                <p class="text-sm md:text-gray-400 font-medium">Dedicated spaces for every client identity.</p>
+                <h3 class="text-lg font-bold mb-2">Client Dashboards</h3>
+                <p class="text-sm text-gray-500 font-medium">Dedicated spaces for every client identity.</p>
             </div>
-            <div class="bg-white p-8 md:p-12 rounded-3xl md:rounded-[40px] notion-card text-center">
-                <div class="w-14 h-14 md:w-16 md:h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 md:mb-8 text-brand">
-                    <svg class="w-7 h-7 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+            <div class="bg-white p-8 rounded-3xl notion-card text-center">
+                <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                 </div>
-                <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">Task Tracking</h3>
-                <p class="text-sm md:text-gray-400 font-medium">Stay on top of deliverables tied to your stages.</p>
+                <h3 class="text-lg font-bold mb-2">Task Tracking</h3>
+                <p class="text-sm text-gray-500 font-medium">Stay on top of deliverables tied to your stages.</p>
             </div>
-            <div class="bg-white p-8 md:p-12 rounded-3xl md:rounded-[40px] notion-card text-center">
-                <div class="w-14 h-14 md:w-16 md:h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 md:mb-8 text-brand">
-                     <svg class="w-7 h-7 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            <div class="bg-white p-8 rounded-3xl notion-card text-center">
+                <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand">
+                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                 </div>
-                <h3 class="text-xl md:text-xl font-bold mb-3 md:mb-4">Visual Delivery</h3>
-                <p class="text-sm md:text-gray-400 font-medium">Final exports delivered straight to the board.</p>
+                <h3 class="text-xl font-bold mb-2">Visual Delivery</h3>
+                <p class="text-sm text-gray-500 font-medium">Final exports delivered straight to the board.</p>
             </div>
         </div>
     </section>
 
     <!-- Closing CTA -->
-    <section class="max-w-7xl mx-auto px-6 py-24 md:py-40 text-center">
-        <h2 class="text-4xl md:text-6xl font-bold mb-8 md:mb-10 leading-tight">Ready to transform your workflow?</h2>
-        <p class="text-lg md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 md:mb-16 font-medium leading-relaxed px-2">
+    <section class="px-5 py-16 text-center">
+        <h2 class="text-4xl font-bold mb-6 leading-tight">Ready to transform your workflow?</h2>
+        <p class="text-lg text-gray-500 mb-10 font-medium leading-relaxed">
             Join motion designers who've moved from scattered tools to one visual workspace that clients actually love using.
         </p>
-        <button onclick="revealAuth('signup')" class="w-full sm:w-auto px-12 md:px-16 py-6 md:py-7 bg-brand text-white text-base md:text-lg font-bold rounded-2xl md:rounded-[32px] hover:scale-105 transition-all shadow-2xl shadow-brand/20">Get Started Now</button>
+        <button onclick="revealAuth('signup')" class="w-full px-8 py-5 bg-brand text-white text-base font-bold rounded-2xl active:scale-[0.98] transition-all shadow-2xl shadow-brand/20 min-h-[56px]">Get Started Now</button>
     </section>
 
     <!-- Footer -->
-    <footer class="max-w-7xl mx-auto px-6 py-24 border-t border-gray-100">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-12">
+    <footer class="px-5 py-12 border-t border-gray-100 mt-auto">
+        <div class="flex flex-col items-center gap-8 text-center">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-black rounded-2xl flex items-center justify-center text-white font-bold text-xl">B</div>
                 <span class="text-2xl font-bold tracking-tight">Boardnify</span>
             </div>
-            <div class="flex gap-12 text-[11px] font-black text-gray-300 uppercase tracking-widest">
-                <a href="#" class="hover:text-brand transition">Twitter</a>
-                <a href="#" class="hover:text-brand transition">Instagram</a>
-                <a href="#" class="hover:text-brand transition">Terms</a>
-                <a href="#" class="hover:text-brand transition">Privacy</a>
+            <div class="flex flex-wrap justify-center gap-6 text-[11px] font-black text-gray-400 uppercase tracking-widest">
+                <a href="#" class="hover:text-brand transition p-2">Twitter</a>
+                <a href="#" class="hover:text-brand transition p-2">Instagram</a>
+                <a href="#" class="hover:text-brand transition p-2">Terms</a>
+                <a href="#" class="hover:text-brand transition p-2">Privacy</a>
             </div>
-            <p class="text-xs font-bold text-gray-200 uppercase tracking-widest">&copy; 2026 Boardnify Labs &mdash; Made for Creatives.</p>
+            <p class="text-xs font-bold text-gray-300 uppercase tracking-widest">&copy; 2026 Boardnify Labs &mdash; Made for Creatives.</p>
         </div>
     </footer>
+
+</div>
 
     <script>
         // ─── Supabase Configuration ─────────────────────────────────────
