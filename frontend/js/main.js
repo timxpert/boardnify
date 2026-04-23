@@ -135,10 +135,11 @@ document.querySelectorAll('.nav-link').forEach(link => {
     const route = e.currentTarget.dataset.route;
     window.navigate(route, window.currentProject);
     if (window.innerWidth < 768) {
-       const sidebar = document.querySelector('aside');
-       const overlay = document.getElementById('mobile-sidebar-overlay');
-       if(sidebar && sidebar.classList.contains('open')) {
-           sidebar.classList.remove('open');
+       const sidebar = document.getElementById('m-side-drawer');
+       const overlay = document.getElementById('m-side-drawer-overlay');
+       if(sidebar && !sidebar.classList.contains('-translate-x-full')) {
+           sidebar.classList.add('-translate-x-full');
+           sidebar.classList.remove('translate-x-0');
            if (overlay) {
              overlay.classList.add('opacity-0');
              setTimeout(() => overlay.classList.add('hidden'), 300);
@@ -149,18 +150,26 @@ document.querySelectorAll('.nav-link').forEach(link => {
 });
 
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-const sidebar = document.querySelector('aside');
-const mobileOverlay = document.getElementById('mobile-sidebar-overlay');
+const sidebar = document.getElementById('m-side-drawer');
+const mobileOverlay = document.getElementById('m-side-drawer-overlay');
 
 function toggleMobileSidebar() {
   if(!sidebar) return;
-  sidebar.classList.toggle('open');
-  if(sidebar.classList.contains('open')) {
-    mobileOverlay.classList.remove('hidden');
-    setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
+  const isOpen = sidebar.classList.contains('-translate-x-full');
+  if(isOpen) {
+    sidebar.classList.remove('-translate-x-full');
+    sidebar.classList.add('translate-x-0');
+    if (mobileOverlay) {
+      mobileOverlay.classList.remove('hidden');
+      setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
+    }
   } else {
-    mobileOverlay.classList.add('opacity-0');
-    setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
+    sidebar.classList.add('-translate-x-full');
+    sidebar.classList.remove('translate-x-0');
+    if (mobileOverlay) {
+      mobileOverlay.classList.add('opacity-0');
+      setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
+    }
   }
 }
 
