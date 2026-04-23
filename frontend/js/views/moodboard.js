@@ -415,8 +415,7 @@
     const toolbar = document.getElementById('m-mobile-editor-toolbar');
     
     body.innerHTML = el.content || '';
-    overlay.classList.remove('hidden');
-    overlay.classList.add('flex');
+    overlay.style.display = 'flex';
     
 
     toolbar.innerHTML = `
@@ -433,13 +432,11 @@
     `;
 
     document.getElementById('mb-editor-back').onclick = () => {
-      overlay.classList.add('hidden');
-      overlay.classList.remove('flex');
+      overlay.style.display = 'none';
     };
     document.getElementById('mb-editor-done').onclick = () => {
       el.content = body.innerHTML;
-      overlay.classList.add('hidden');
-      overlay.classList.remove('flex');
+      overlay.style.display = 'none';
       renderElements();
       saveBoard();
       undoMgr.push(elements, connections);
