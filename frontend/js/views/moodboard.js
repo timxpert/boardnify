@@ -416,6 +416,7 @@
     
     body.innerHTML = el.content || '';
     overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
     
 
     toolbar.innerHTML = `
@@ -431,10 +432,14 @@
       </button>
     `;
 
-    document.getElementById('mb-editor-back').onclick = () => overlay.classList.add('hidden');
+    document.getElementById('mb-editor-back').onclick = () => {
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    };
     document.getElementById('mb-editor-done').onclick = () => {
       el.content = body.innerHTML;
       overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
       renderElements();
       saveBoard();
       undoMgr.push(elements, connections);
