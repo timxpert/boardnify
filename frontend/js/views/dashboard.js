@@ -55,7 +55,6 @@ window.initDashboard = function(container, socket) {
       active: filteredProjects.length,
       pending: filteredProjects.filter(p => ['In Review', 'Pending Review', 'Needs Your Review'].includes(p.status)).length,
       completed: filteredProjects.filter(p => p.status === 'Approved').length,
-      collabs: window.appData.projects.length
     };
 
     const currentFilter = window._dashboardFilter || 'All';
@@ -64,124 +63,108 @@ window.initDashboard = function(container, socket) {
       : filteredProjects.filter(p => p.type === currentFilter.toLowerCase().replace(' ', '_'));
 
     container.innerHTML = `
-      <div class="view-container w-full max-w-7xl mx-auto p-6 md:p-12 pb-24">
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-          <div>
-            <h1 class="text-3xl font-bold text-text-dark tracking-tight mb-1">Home</h1>
-            <p class="text-text-muted text-sm font-medium">Manage your workspace and projects</p>
-          </div>
-          <button onclick="window.showCreateModal()" class="bg-brand hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-xl smooth-transition shadow-lg shadow-brand/20 flex items-center gap-2 text-sm">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            New Project
-          </button>
+      <div class="view-container w-full max-w-7xl mx-auto p-6 pb-24">
+        <!-- Dashboard Header -->
+        <header class="mb-8">
+          <h1 class="text-3xl font-black text-text-dark tracking-tight mb-1">Projects Dashboard</h1>
+          <p class="text-text-muted text-sm font-medium">Welcome back! Here's what's happening.</p>
         </header>
 
-        <!-- Stats Overview -->
-        ${rawProjects.length > 0 ? `
-        <div class="grid grid-cols-2 gap-4 mb-12">
-          <div class="bg-white p-8 rounded-[24px] border border-border-light shadow-subtle hover:shadow-subtle-lg transition-shadow">
-            <p class="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Active Projects</p>
-            <h3 class="text-4xl font-bold text-text-dark tracking-tighter">${stats.active}</h3>
+        <!-- Horizontal Tasks Scroll (Tasks Progress) -->
+        <section class="mb-10">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-[11px] font-black text-text-dark uppercase tracking-widest">Tasks Progress</h2>
+            <button onclick="window.navigate('kanban')" class="text-[10px] font-bold text-primary uppercase tracking-wider">View All</button>
           </div>
-          <div class="bg-white p-8 rounded-[24px] border border-border-light shadow-subtle hover:shadow-subtle-lg transition-shadow">
-            <p class="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Awaiting Review</p>
-            <h3 class="text-4xl font-bold text-text-dark tracking-tighter">${stats.pending}</h3>
+          <div class="flex overflow-x-auto gap-4 no-scrollbar pb-2 -mx-6 px-6">
+            ${[
+              { title: 'Moodboard Review', project: 'Nike Spring', status: 'Due Today', color: 'bg-primary/10 text-primary' },
+              { title: 'Script Draft', project: 'Apple Vision', status: 'In Progress', color: 'bg-blue-50 text-blue-500' },
+              { title: 'Style Frames', project: 'Tesla X', status: 'Pending', color: 'bg-orange-50 text-orange-500' }
+            ].map(task => `
+              <div class="bento-card min-w-[200px] p-5 shrink-0">
+                <span class="inline-block px-2 py-1 rounded-lg ${task.color} text-[8px] font-black uppercase tracking-wider mb-3">${task.status}</span>
+                <h4 class="font-bold text-sm text-text-dark mb-1">${task.title}</h4>
+                <p class="text-[10px] text-text-muted font-medium">${task.project}</p>
+              </div>
+            `).join('')}
           </div>
-          <div class="bg-white p-8 rounded-[24px] border border-border-light shadow-subtle hover:shadow-subtle-lg transition-shadow">
-            <p class="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Completed</p>
-            <h3 class="text-4xl font-bold text-text-dark tracking-tighter">${stats.completed}</h3>
-          </div>
-          <div class="bg-white p-8 rounded-[24px] border border-border-light shadow-subtle hover:shadow-subtle-lg transition-shadow">
-            <p class="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Collaborators</p>
-            <h3 class="text-4xl font-bold text-text-dark tracking-tighter">${stats.collabs}</h3>
-          </div>
-        </div>
+        </section>
 
-        <!-- Filters -->
-        <div class="flex flex-wrap gap-2 mb-10">
-          ${['All', 'Moodboard', 'Script', 'Review', 'Motion Project', 'Style Frames', 'Task Tracker'].map(f => `
-            <button onclick="window.filterDashboard('${f}')" class="px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${currentFilter === f ? 'bg-brand text-white shadow-md' : 'bg-white border border-border-light text-text-muted hover:border-brand/40'}">${f === 'Motion Project' ? 'Motion' : (f === 'Style Frames' ? 'Style' : (f === 'Task Tracker' ? 'Tasks' : f))}</button>
-          `).join('')}
-        </div>
-        ` : ''}
+        <!-- Projects Grid -->
+        <section class="mb-10">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-[11px] font-black text-text-dark uppercase tracking-widest">My Workspace (${displayProjects.length})</h2>
+            <button onclick="window.showCreateModal()" class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+          </div>
 
-        <div class="grid grid-cols-1 gap-12">
-          <!-- Projects List -->
-          <div class="space-y-8">
-            ${rawProjects.length > 0 ? `
-            <h2 class="text-[11px] font-black text-text-dark uppercase tracking-widest flex items-center gap-2">
-              My Workspace
-              <span class="bg-gray-100 text-text-muted text-[10px] px-2 py-0.5 rounded-full font-bold">${displayProjects.length}</span>
-            </h2>
-            ` : ''}
+          <div class="flex flex-wrap gap-2 mb-6">
+            ${['All', 'Moodboard', 'Script', 'Review', 'Motion'].map(f => `
+              <button onclick="window.filterDashboard('${f}')" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentFilter === f ? 'bg-primary text-white' : 'bg-white border border-gray-100 text-text-muted'}">${f}</button>
+            `).join('')}
+          </div>
 
+          <div class="grid grid-cols-1 gap-6">
             ${displayProjects.length === 0 ? `
-              <div class="py-24 flex flex-col items-center justify-center text-center border-2 border-dashed border-border-light rounded-3xl bg-gray-50/30">
-                 <div class="w-20 h-20 bg-white shadow-subtle rounded-3xl flex items-center justify-center text-gray-200 mb-6">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                 </div>
-                 <h3 class="text-xl font-bold text-text-dark mb-1">No projects found</h3>
-                 <p class="text-sm text-text-muted font-medium mb-8">Start your next creative journey by creating a project.</p>
-                 <button onclick="window.showCreateModal()" class="px-8 py-3 bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-90 transition">Create Your First Project</button>
+              <div class="py-16 text-center bento-card border-dashed">
+                 <p class="text-sm text-text-muted font-medium">No projects found. Create your first board!</p>
               </div>
-            ` : `
-              <div class="grid grid-cols-1 gap-8">
-                ${displayProjects.map(p => {
-                  const typeConfig = {
-                    moodboard: { label: 'Moodboard', icon: '<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>', bg: 'bg-purple-50', text: 'text-purple-500' },
-                    script: { label: 'Script', icon: '<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>', bg: 'bg-green-50', text: 'text-green-500' },
-                    review: { label: 'Review', icon: '<path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>', bg: 'bg-red-50', text: 'text-red-500' },
-                    task_tracker: { label: 'Tasks', icon: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>', bg: 'bg-teal-50', text: 'text-teal-500' },
-                    motion_project: { label: 'Motion', icon: '<path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>', bg: 'bg-orange-50', text: 'text-orange-500' },
-                    style_frames: { label: 'Frames', icon: '<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>', bg: 'bg-blue-50', text: 'text-blue-500' }
-                  };
-                  const config = typeConfig[p.type] || typeConfig.moodboard;
-                  
-                  return `
-                  <div class="group bg-white border border-border-light rounded-[32px] p-8 shadow-subtle hover:shadow-card hover:border-brand/20 transition-all cursor-pointer relative" id="card-${p.id}" onclick="window.navigate('${p.type}', '${p.id}')">
-                    <div class="flex justify-between items-start mb-6">
-                      <div class="w-12 h-12 ${config.bg} ${config.text} rounded-2xl flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">${config.icon}</svg>
+            ` : displayProjects.map(p => {
+              const typeConfig = {
+                moodboard: { icon: 'M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5z', color: 'text-purple-500 bg-purple-50' },
+                script: { icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', color: 'text-blue-500 bg-blue-50' },
+                review: { icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', color: 'text-green-500 bg-green-50' }
+              };
+              const config = typeConfig[p.type] || typeConfig.moodboard;
+              return `
+                <div class="bento-card p-6 flex gap-5 items-center relative" onclick="window.navigate('${p.type}', '${p.id}')">
+                   <div class="w-14 h-14 ${config.color} rounded-2xl flex items-center justify-center shrink-0">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${config.icon}"></path></svg>
+                   </div>
+                   <div class="flex-1 min-w-0">
+                      <h3 class="font-black text-text-dark text-lg truncate mb-1">${p.title}</h3>
+                      <div class="flex items-center gap-2 text-[9px] font-bold text-text-muted uppercase tracking-wider">
+                         <span>${p.client || 'Personal'}</span>
+                         <span>•</span>
+                         <span class="text-primary">${p.status || 'In Progress'}</span>
                       </div>
-                      <div class="relative project-menu-container">
-                        <button onclick="event.stopPropagation(); window.toggleProjectMenu('${p.id}')" class="p-2 hover:bg-gray-50 rounded-xl text-gray-300 hover:text-text-dark transition-colors">
-                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
-                        </button>
-                        <div id="menu-${p.id}" class="hidden absolute right-0 mt-2 w-48 bg-white border border-border-light rounded-2xl shadow-floating z-50 py-2 animate-scale-in">
-                           <button onclick="window.navigate('${p.type}', '${p.id}')" class="w-full text-left px-4 py-2 text-xs font-bold text-text-dark hover:bg-gray-50">Open</button>
-                           <button onclick="window.startRename('${p.id}')" class="w-full text-left px-4 py-2 text-xs font-bold text-text-dark hover:bg-gray-50">Rename</button>
-                           <button onclick="window.confirmDeleteProject('${p.id}')" class="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50">Delete</button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="mb-6">
-                      <h3 class="text-xl font-bold text-text-dark mb-2" id="title-display-${p.id}">${p.title}</h3>
-                      <input type="text" id="title-edit-${p.id}" class="hidden w-full text-xl font-bold border-b border-brand outline-none pb-1" value="${p.title}" onclick="event.stopPropagation()">
-                      
-                      <div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                        <span class="text-text-muted opacity-60">${p.client || 'Personal'}</span>
-                        <span class="text-gray-300">•</span>
-                        <span class="${p.status === 'Approved' ? 'text-blue-500' : (p.status === 'In Progress' ? 'text-green-500' : 'text-purple-500')}">${p.status || 'Draft'}</span>
-                      </div>
-                    </div>
-
-                    <p class="text-[11px] font-bold text-text-muted opacity-40">Edited ${p.updated_at ? timeAgo(p.updated_at) : 'recently'}</p>
-
-                    <!-- Deletion Overlay -->
-                    <div id="delete-confirm-${p.id}" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm rounded-[32px] z-[60] flex flex-col items-center justify-center p-8 text-center" onclick="event.stopPropagation()">
-                       <h4 class="text-base font-bold text-text-dark mb-2">Delete Project?</h4>
-                       <div class="flex gap-2 w-full mt-4">
-                          <button onclick="window.deleteProject('${p.id}')" class="flex-1 py-3 bg-red-500 text-white rounded-2xl text-[10px] font-black uppercase">Delete</button>
-                          <button onclick="window.cancelDeleteProject('${p.id}')" class="flex-1 py-3 bg-gray-100 text-text-muted rounded-2xl text-[10px] font-black uppercase">No</button>
-                       </div>
-                    </div>
-                  </div>
-                `}).join('')}
-              </div>
-            `}
+                   </div>
+                   <button onclick="event.stopPropagation(); window.toggleProjectMenu('${p.id}')" class="p-2 text-gray-300">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+                   </button>
+                   <div id="menu-${p.id}" class="hidden absolute right-6 top-16 w-32 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 py-2">
+                      <button onclick="window.startRename('${p.id}')" class="w-full text-left px-4 py-2 text-[10px] font-bold text-text-dark uppercase tracking-widest">Rename</button>
+                      <button onclick="window.confirmDeleteProject('${p.id}')" class="w-full text-left px-4 py-2 text-[10px] font-bold text-red-500 uppercase tracking-widest">Delete</button>
+                   </div>
+                </div>
+              `;
+            }).join('')}
           </div>
-        </div>
+        </section>
+
+        <!-- Recent Activity -->
+        <section class="mb-10">
+          <h2 class="text-[11px] font-black text-text-dark uppercase tracking-widest mb-6">Recent Activity</h2>
+          <div class="bento-card p-6 space-y-6">
+            ${[
+              { user: 'Alex', action: 'uploaded 4 style frames to', board: 'Cyberpunk 2077', time: '2h ago' },
+              { user: 'Sarah', action: 'approved the script for', board: 'Nike Air', time: '5h ago' },
+              { user: 'Mike', action: 'added a comment on', board: 'Tesla X', time: '1d ago' }
+            ].map(act => `
+              <div class="flex gap-4">
+                 <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-[10px] shrink-0">${act.user[0]}</div>
+                 <div class="flex-1">
+                    <p class="text-xs text-text-dark leading-snug">
+                       <span class="font-bold">${act.user}</span> ${act.action} <span class="font-bold text-primary">${act.board}</span>
+                    </p>
+                    <span class="text-[9px] text-text-muted font-medium">${act.time}</span>
+                 </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
       </div>
     `;
   }
@@ -191,185 +174,122 @@ window.initDashboard = function(container, socket) {
        ? window.appData.projects.filter(p => p.client === window.activeClient)
        : window.appData.projects;
 
-    const stats = {
-      active: filteredProjects.length,
-      pending: filteredProjects.filter(p => ['In Review', 'Pending Review', 'Needs Your Review'].includes(p.status) || !p.status || p.status === 'In Progress').length,
-      completed: filteredProjects.filter(p => p.status === 'Approved').length,
-      collabs: filteredProjects.length
-    };
-
     container.innerHTML = `
-      <div class="view-container w-full max-w-7xl mx-auto p-6 md:p-12 pb-24">
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-          <div>
-            <h1 class="text-3xl font-bold text-text-dark tracking-tight mb-1">Home</h1>
-            <p class="text-text-muted text-sm font-medium">Manage your workspace and projects</p>
-          </div>
+      <div class="view-container w-full max-w-7xl mx-auto p-6 pb-24">
+        <header class="mb-8">
+          <h1 class="text-3xl font-black text-text-dark tracking-tight mb-1">Client Dashboard</h1>
+          <p class="text-text-muted text-sm font-medium">Select a project to review progress.</p>
         </header>
 
-        <!-- Stats Overview -->
-        ${filteredProjects.length > 0 ? `
-        <div class="grid grid-cols-2 gap-4 mb-12">
-          <div class="bg-white p-8 rounded-[24px] border border-border-light shadow-subtle hover:shadow-subtle-lg transition-shadow">
-            <p class="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Active Projects</p>
-            <h3 class="text-4xl font-bold text-text-dark tracking-tighter">${stats.active}</h3>
-          </div>
-          <div class="bg-white p-8 rounded-[24px] border border-border-light shadow-subtle hover:shadow-subtle-lg transition-shadow">
-            <p class="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Awaiting Review</p>
-            <h3 class="text-4xl font-bold text-text-dark tracking-tighter">${stats.pending}</h3>
-          </div>
-          <div class="bg-white p-8 rounded-[24px] border border-border-light shadow-subtle hover:shadow-subtle-lg transition-shadow">
-            <p class="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Completed</p>
-            <h3 class="text-4xl font-bold text-text-dark tracking-tighter">${stats.completed}</h3>
-          </div>
-          <div class="bg-white p-8 rounded-[24px] border border-border-light shadow-subtle hover:shadow-subtle-lg transition-shadow">
-            <p class="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Collaborators</p>
-            <h3 class="text-4xl font-bold text-text-dark tracking-tighter">${stats.collabs}</h3>
-          </div>
-        </div>
-        ` : ''}
-
-        <div class="grid grid-cols-1 gap-8">
+        <div class="grid grid-cols-1 gap-6">
           ${filteredProjects.length === 0 ? `
-            <div class="lg:col-span-4 py-24 flex flex-col items-center justify-center text-center border-2 border-dashed border-border-light rounded-[32px] bg-gray-50/30">
-               <svg class="w-12 h-12 text-gray-200 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-               <h3 class="text-lg font-bold text-text-dark mb-1">No shared projects</h3>
-               <p class="text-xs text-text-muted font-medium max-w-sm">Projects shared by your designer will appear here.</p>
+            <div class="py-16 text-center bento-card border-dashed">
+               <p class="text-sm text-text-muted font-medium">No projects shared with you yet.</p>
             </div>
-          ` : `
-            <div class="grid grid-cols-1 gap-8 w-full">
-              ${filteredProjects.map(p => {
-                const typeConfig = {
-                  moodboard: { label: 'Moodboard', icon: '<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>', bg: 'bg-purple-50', text: 'text-purple-500' },
-                  script: { label: 'Script', icon: '<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>', bg: 'bg-green-50', text: 'text-green-500' },
-                  review: { label: 'Review', icon: '<path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>', bg: 'bg-red-50', text: 'text-red-500' },
-                  task_tracker: { label: 'Tasks', icon: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>', bg: 'bg-teal-50', text: 'text-teal-500' },
-                  motion_project: { label: 'Motion', icon: '<path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>', bg: 'bg-orange-50', text: 'text-orange-500' },
-                  style_frames: { label: 'Frames', icon: '<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>', bg: 'bg-blue-50', text: 'text-blue-500' }
-                };
-                const config = typeConfig[p.type] || typeConfig.moodboard;
-
-                return `
-                <div class="group bg-white border border-border-light rounded-[32px] p-8 shadow-subtle hover:shadow-card hover:border-brand/20 transition-all cursor-pointer relative" onclick="window.navigate('${p.type}', '${p.id}')">
-                   <div class="flex justify-between items-start mb-6">
-                      <div class="w-12 h-12 ${config.bg} ${config.text} rounded-2xl flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">${config.icon}</svg>
-                      </div>
-                      <span class="badge ${p.status === 'Approved' ? 'badge-green' : 'badge-purple'}">${p.status || 'In Progress'}</span>
-                   </div>
-                   
-                   <div class="mb-6">
-                      <h3 class="text-xl font-bold text-text-dark mb-2">${p.title}</h3>
-                      <div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-muted opacity-60">
-                        <span>Edited ${timeAgo(p.updated_at || p.last_updated)}</span>
-                      </div>
-                   </div>
-                </div>
-                `;
-              }).join('')}
+          ` : filteredProjects.map(p => `
+            <div class="bento-card p-6 flex gap-5 items-center" onclick="window.navigate('${p.type}', '${p.id}')">
+               <div class="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shrink-0">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+               </div>
+               <div class="flex-1 min-w-0">
+                  <h3 class="font-black text-text-dark text-lg truncate mb-1">${p.title}</h3>
+                  <div class="flex items-center gap-2 text-[9px] font-bold text-text-muted uppercase tracking-wider">
+                     <span>${p.status || 'In Progress'}</span>
+                     <span>•</span>
+                     <span>Edited ${timeAgo(p.updated_at || p.last_updated)}</span>
+                  </div>
+               </div>
+               <div class="w-2 h-2 bg-primary rounded-full"></div>
             </div>
-          `}
-
+          `).join('')}
         </div>
       </div>
     `;
   }
+
 }
 
 window.showCreateModal = async function() {
   if (window.activeRole === 'client') return; 
 
-  // Fetch clients from Supabase
+  const overlay = document.getElementById('m-bottom-sheet-overlay');
+  const sheet = document.getElementById('m-bottom-sheet');
+  const content = document.getElementById('m-bottom-sheet-content');
+
+  // Fetch clients
   let clients = [];
   try {
     const { data } = await window.supabaseClient.from('clients').select('id, name');
     clients = data || [];
   } catch (err) { console.error('Failed to fetch clients', err); }
 
-  const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-text-dark/60 backdrop-blur-md animate-fade-in';
-  modal.innerHTML = `
-    <div class="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden transform scale-95 transition-all flex flex-col max-h-[90vh]">
-      <div class="p-10 border-b border-border-light flex justify-between items-center shrink-0">
-        <div>
-           <h2 class="text-3xl font-bold text-text-dark tracking-tight">Create Project</h2>
-           <p class="text-sm text-text-muted font-medium mt-1">Plan. Manage. Execute.</p>
-        </div>
-        <button onclick="this.closest('.fixed').remove()" class="w-10 h-10 rounded-full border border-border-light flex items-center justify-center text-gray-400 hover:text-text-dark hover:bg-gray-50 transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+  content.innerHTML = `
+    <div class="space-y-8 animate-fade-in">
+      <div>
+         <h2 class="text-2xl font-black text-text-dark tracking-tight mb-1">Create Project</h2>
+         <p class="text-xs text-text-muted font-medium">New board, new possibilities.</p>
       </div>
 
-      <div class="p-10 overflow-y-auto space-y-10 custom-scrollbar">
-        <!-- Title -->
+      <div class="space-y-6">
         <div>
-          <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">Project Title</label>
-          <input type="text" id="new-p-title" placeholder="E.g. Brand Anthem 2024" class="w-full px-7 py-5 rounded-3xl border border-border-light focus:border-brand focus:ring-4 focus:ring-brand/5 outline-none smooth-transition text-base text-text-dark font-bold bg-gray-50/50">
+          <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Project Title</label>
+          <input type="text" id="new-p-title" placeholder="Project Name" class="w-full px-5 py-4 rounded-2xl border border-gray-100 outline-none text-sm font-bold bg-gray-50/50 focus:border-primary">
         </div>
 
-        <!-- Client -->
         <div>
-          <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">Select Client <span class="opacity-40 italic">(Optional)</span></label>
-          <select id="new-p-client" class="w-full px-7 py-5 rounded-3xl border border-border-light focus:border-brand outline-none smooth-transition text-base text-text-dark font-bold bg-gray-50/50 appearance-none">
-            <option value="">Select a client</option>
-            ${clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-          </select>
-        </div>
-
-        <!-- Types -->
-        <div>
-          <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4">Board Type</label>
-          <div class="grid grid-cols-2 gap-4" id="type-selector">
+          <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Board Type</label>
+          <div class="grid grid-cols-2 gap-3" id="type-selector">
              ${[
-               { id: 'moodboard', title: 'Moodboard', desc: 'Collect visual references and assets', icon: '<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>' },
-               { id: 'task_tracker', title: 'Task Tracker', desc: 'Manage tasks and project to-dos', icon: '<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' },
-               { id: 'script', title: 'Script', desc: 'Write or upload your project script', icon: '<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>' },
-               { id: 'review', title: 'Review', desc: 'Share work and collect feedback', icon: '<path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>' },
-               { id: 'motion_project', title: 'Motion Project', desc: 'Plan and organise motion or video work', icon: '<path d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a2 2 0 002-2V6a2 2 0 00-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2z"></path>' },
-               { id: 'style_frames', title: 'Style Frames', desc: 'Build out visual style and frame references', icon: '<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>' }
+               { id: 'moodboard', title: 'Moodboard', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14' },
+               { id: 'task_tracker', title: 'Tasks', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+               { id: 'script', title: 'Script', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586' },
+               { id: 'review', title: 'Review', icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14' }
              ].map(t => `
-               <button onclick="window.selectProjectType('${t.id}')" id="type-btn-${t.id}" class="project-type-btn p-6 border-2 border-border-light rounded-[32px] flex flex-col items-start gap-4 hover:border-brand/40 smooth-transition text-left group ${t.id === 'moodboard' ? 'border-brand bg-brand/5 active-type' : ''}" data-type="${t.id}">
-                  <div class="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-text-muted group-hover:bg-brand/10 group-hover:text-brand transition-colors type-icon-box">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">${t.icon}</svg>
+               <button onclick="window.selectProjectType('${t.id}')" id="type-btn-${t.id}" class="project-type-btn p-4 border border-gray-100 rounded-2xl flex flex-col items-start gap-3 transition-all ${t.id === 'moodboard' ? 'border-primary bg-primary/5 active-type' : ''}" data-type="${t.id}">
+                  <div class="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 type-icon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${t.icon}"></path></svg>
                   </div>
-                  <div>
-                    <span class="block text-xs font-black uppercase tracking-widest text-text-dark mb-1">${t.title}</span>
-                    <span class="block text-[10px] text-text-muted font-medium leading-relaxed">${t.desc}</span>
-                  </div>
+                  <span class="text-[10px] font-black uppercase tracking-widest text-text-dark">${t.title}</span>
                </button>
              `).join('')}
           </div>
         </div>
-      </div>
 
-      <div class="p-8 bg-gray-50/50 border-t border-border-light flex gap-4 shrink-0">
-        <button onclick="this.closest('.fixed').remove()" class="flex-1 px-6 py-5 rounded-3xl font-bold text-xs text-gray-400 hover:text-text-dark transition uppercase tracking-widest">Cancel</button>
-        <button id="confirm-create" class="flex-1 px-6 py-5 rounded-3xl font-black text-xs uppercase tracking-widest bg-brand text-white hover:opacity-90 shadow-xl shadow-brand/20 transition-all transform active:scale-95">Create Project</button>
+        <button id="confirm-create" class="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-primary text-white shadow-xl shadow-primary/20">Create Project</button>
       </div>
     </div>
   `;
-  document.body.appendChild(modal);
-  setTimeout(() => modal.firstElementChild.classList.remove('scale-95'), 10);
+
+  // Show Bottom Sheet
+  overlay.classList.remove('hidden');
+  sheet.classList.remove('translate-y-full');
+
+  const closeSheet = () => {
+    overlay.classList.add('hidden');
+    sheet.classList.add('translate-y-full');
+  };
+
+  overlay.onclick = closeSheet;
 
   window.selectProjectType = (typeId) => {
     document.querySelectorAll('.project-type-btn').forEach(b => {
-      b.classList.remove('border-brand', 'bg-brand/5', 'active-type');
-      b.querySelector('.type-icon-box').classList.remove('bg-brand/10', 'text-brand');
+      b.classList.remove('border-primary', 'bg-primary/5', 'active-type');
+      b.querySelector('.type-icon').classList.add('text-gray-400');
+      b.querySelector('.type-icon').classList.remove('text-primary');
     });
     const btn = document.getElementById(`type-btn-${typeId}`);
-    btn.classList.add('border-brand', 'bg-brand/5', 'active-type');
-    btn.querySelector('.type-icon-box').classList.add('bg-brand/10', 'text-brand');
+    btn.classList.add('border-primary', 'bg-primary/5', 'active-type');
+    btn.querySelector('.type-icon').classList.remove('text-gray-400');
+    btn.querySelector('.type-icon').classList.add('text-primary');
   };
 
   document.getElementById('confirm-create').onclick = async () => {
     const titleInput = document.getElementById('new-p-title');
     const title = titleInput.value.trim();
-    const clientId = document.getElementById('new-p-client').value || null;
-    const type = modal.querySelector('.active-type')?.dataset.type || 'moodboard';
+    const type = content.querySelector('.active-type')?.dataset.type || 'moodboard';
 
     if(!title) {
-      titleInput.classList.add('border-red-500', 'ring-4', 'ring-red-500/5');
-      titleInput.placeholder = "Please enter a project title";
+      titleInput.classList.add('border-red-500');
       titleInput.focus();
       return;
     }
@@ -377,13 +297,10 @@ window.showCreateModal = async function() {
     const { data: { user } } = await window.supabaseClient.auth.getUser();
     const newProjectId = crypto.randomUUID();
     
-    const clientName = clients.find(c => c.id === clientId)?.name || null;
-
     const newProject = {
       id: newProjectId,
       user_id: user.id,
       title: title,
-      client_id: clientId,
       type: type,
       updated_at: new Date().toISOString()
     };
@@ -391,20 +308,12 @@ window.showCreateModal = async function() {
     try {
       if(window.dbInsert) {
         await window.dbInsert('projects', newProject);
-        
-        // Optimistic local update
-        window.appData.projects.unshift({
-           ...newProject,
-           client: clientName, // For backward compatibility in rendering
-           last_updated: newProject.updated_at
-        });
-
-        window.showToast(`Project created: ${title}`, 'success');
-        modal.remove();
+        window.appData.projects.unshift({ ...newProject, last_updated: newProject.updated_at });
+        window.showToast(`Project created`, 'success');
+        closeSheet();
         window.navigate(type, newProjectId);
       }
     } catch (err) {
-      console.error(err);
       window.showToast('Failed to create project', 'error');
     }
   };

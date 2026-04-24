@@ -12,7 +12,8 @@ const routes = {
   motion_project: window.initMotionProjects,
   review: window.initReviews,
   trash: window.initTrash,
-  storyboard: window.initStoryboard
+  storyboard: window.initStoryboard,
+  settings: window.initSettings
 };
 
 window.navigate = function(route, projectId = null, skipHash = false) {
@@ -487,12 +488,8 @@ if(newClientInviteSubmitBtn) {
   });
 }
 
-// Client Access Settings Modal Logic
+// Client Access Settings Logic (Bento Bottom Sheet Redesign)
 const accessBtn = document.getElementById('access-settings-btn');
-const accessModal = document.getElementById('access-modal');
-const accessModalContent = document.getElementById('access-modal-content');
-const accessCloseBtn = document.getElementById('access-close-btn');
-const accessContainer = document.getElementById('access-toggles-container');
 
 if(accessBtn) {
   accessBtn.addEventListener('click', () => {
@@ -501,47 +498,82 @@ if(accessBtn) {
      if(!proj) return;
      if(!proj.data) proj.data = {};
      if(!proj.data.clientPermissions) {
-        proj.data.clientPermissions = { library: false, moodboard: false, styleframes: true, script: true, kanban: true, reviews: true, motionprojects: true };
+        proj.data.clientPermissions = { library: false, moodboard: true, styleframes: true, script: true, kanban: false, reviews: true, motionprojects: false };
      }
      const perms = proj.data.clientPermissions;
      const labels = {
-        moodboard: 'Moodboard Builder',
-        styleframes: 'Style Frames',
-        script: 'Scripts',
-        kanban: 'Task Tracker',
-        motionprojects: 'Motion Projects',
-        reviews: 'Reviews'
+        script: { title: 'Script View', sub: 'Access to production scripts', icon: '<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>' },
+        moodboard: { title: 'Moodboards', sub: 'Experimental reference galleries', icon: '<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>' },
+        styleframes: { title: 'Style Frames', sub: 'Visual direction and layout grids', icon: '<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>' },
+        motionprojects: { title: 'Motion/Animation', sub: 'Playable video and motion assets', icon: '<path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>' },
+        kanban: { title: 'Project Tasks', sub: 'View internal task lists', icon: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>' },
+        reviews: { title: 'Active Reviews', sub: 'Comment and approve deliverables', icon: '<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>' }
      };
-     accessContainer.innerHTML = Object.keys(labels).map(key => `
-        <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-           <span class="text-sm font-semibold text-gray-800">${labels[key]}</span>
-           <label class="relative inline-flex items-center cursor-pointer">
-             <input type="checkbox" class="sr-only peer access-toggle-item" data-key="${key}" ${perms[key] ? 'checked' : ''}>
-             <div class="w-11 h-6 bg-border-light peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-light after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
-           </label>
-        </div>
-     `).join('');
-     document.querySelectorAll('.access-toggle-item').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-           const key = e.target.dataset.key;
-           proj.data.clientPermissions[key] = e.target.checked;
-           if(window.dbUpdate) window.dbUpdate('projects', proj.id, { data: proj.data });
-           window.updateNavVisibility();
-        });
-     });
-     accessModal.classList.remove('hidden');
-     setTimeout(() => {
-        accessModal.classList.remove('opacity-0');
-        accessModalContent.classList.remove('scale-95');
-     }, 10);
-  });
-}
 
-if(accessCloseBtn) {
-  accessCloseBtn.addEventListener('click', () => {
-     accessModal.classList.add('opacity-0');
-     accessModalContent.classList.add('scale-95');
-     setTimeout(() => accessModal.classList.add('hidden'), 300);
+     const sheet = document.getElementById('m-bottom-sheet');
+     const overlay = document.getElementById('m-bottom-sheet-overlay');
+     const content = document.getElementById('m-bottom-sheet-content');
+
+     content.innerHTML = `
+        <div class="animate-fade-in space-y-6">
+           <div class="flex items-center justify-between">
+              <div>
+                 <h2 class="text-xl font-bold text-text-dark tracking-tight">Client Restrictions</h2>
+                 <p class="text-xs text-text-muted font-medium">Manage guest access to project features.</p>
+              </div>
+              <button onclick="window.closeBottomSheet()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+           </div>
+
+           <div class="space-y-3 pt-2">
+              ${Object.keys(labels).map(key => `
+                 <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-50 shadow-sm transition-all hover:border-brand/20">
+                    <div class="flex items-center gap-3">
+                       <div class="w-10 h-10 bg-brand/5 rounded-xl flex items-center justify-center text-brand">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             ${labels[key].icon}
+                          </svg>
+                       </div>
+                       <div>
+                          <h4 class="text-sm font-bold text-text-dark">${labels[key].title}</h4>
+                          <p class="text-[9px] text-gray-400 font-medium uppercase tracking-widest">${labels[key].sub}</p>
+                       </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" class="sr-only peer access-toggle-item" data-key="${key}" ${perms[key] ? 'checked' : ''}>
+                      <div class="w-11 h-6 bg-gray-100 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+                    </label>
+                 </div>
+              `).join('')}
+           </div>
+
+           <div class="flex flex-col gap-3 pt-6">
+              <button id="save-access-btn" class="w-full py-4 bg-brand text-white font-black rounded-2xl transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-brand/20 hover:scale-[1.01] active:scale-95">
+                 Save Permission Settings
+              </button>
+              <button onclick="window.closeBottomSheet()" class="w-full py-4 bg-brand/5 text-brand font-black rounded-2xl transition-all uppercase tracking-widest text-[10px] hover:bg-brand/10">
+                 Reset to Default
+              </button>
+           </div>
+        </div>
+     `;
+
+     // Setup Save Logic
+     document.getElementById('save-access-btn').addEventListener('click', () => {
+        document.querySelectorAll('.access-toggle-item').forEach(checkbox => {
+           const key = checkbox.dataset.key;
+           proj.data.clientPermissions[key] = checkbox.checked;
+        });
+        if(window.dbUpdate) window.dbUpdate('projects', proj.id, { data: proj.data });
+        if(window.updateNavVisibility) window.updateNavVisibility();
+        window.showToast?.('Permissions updated successfully', 'success');
+        window.closeBottomSheet();
+     });
+
+     // Show sheet
+     overlay.classList.remove('hidden');
+     sheet.classList.remove('translate-y-full');
   });
 }
 

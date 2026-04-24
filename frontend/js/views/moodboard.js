@@ -91,46 +91,44 @@
     undoMgr.push(elements, connections);
 
     container.innerHTML = `
-      <div id="moodboard-container" class="relative w-full h-full overflow-hidden m-dot-grid touch-none" style="background: var(--bg-canvas);">
+      <div id="moodboard-container" class="relative w-full h-full overflow-hidden touch-none" style="background: var(--bg-canvas);">
+        <!-- Dot Grid Background -->
+        <div class="absolute inset-0 pointer-events-none opacity-40" style="background-image: radial-gradient(#6B21FF 0.5px, transparent 0.5px); background-size: 24px 24px;"></div>
+        
         <div id="moodboard-canvas" class="absolute inset-0 origin-top-left" style="width: 5000px; height: 5000px; transform: translate(0px, 0px) scale(1);">
           <svg id="moodboard-svg-layer" class="absolute inset-0 pointer-events-auto w-full h-full" style="z-index: 5;">
             <defs>
               <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill="#7C6FF7" />
+                <polygon points="0 0, 10 3.5, 0 7" fill="#6B21FF" />
               </marker>
             </defs>
             <g id="moodboard-connections-group"></g>
           </svg>
-          <div id="moodboard-elements-layer" class="absolute inset-0 z-10 shadow-sm"></div>
+          <div id="moodboard-elements-layer" class="absolute inset-0 z-10"></div>
         </div>
         
-        <!-- Desktop Sidebar -->
-        <nav id="m-sidebar" class="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 bg-white rounded-2xl shadow-floating z-[100] border border-border-light md:flex hidden">
-          <button class="nav-link active m-tool-btn" data-tool="select" title="Move Tool (V)">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+        <!-- Floating Toolbar (Mobile/Desktop) -->
+        <div class="absolute left-1/2 -translate-x-1/2 bottom-8 flex items-center gap-2 p-2 bg-white/80 backdrop-blur-xl border border-white rounded-[24px] shadow-2xl z-[100] transition-all">
+          <button class="nav-link active m-tool-btn w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" data-tool="select" title="Select (V)">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
           </button>
-          <button class="nav-link m-tool-btn" data-tool="note" title="Sticky Note (N)">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <button class="nav-link m-tool-btn w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" data-tool="note" title="Note (N)">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           </button>
-          <button class="nav-link m-tool-btn" data-tool="text" title="Text Element (T)">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+          <button class="nav-link m-tool-btn w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" data-tool="text" title="Text (T)">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
           </button>
-          <button class="nav-link m-tool-btn" data-tool="arrow" title="Connection Arrow (A)">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          <button class="nav-link m-tool-btn w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" data-tool="upload" title="Upload (U)">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
           </button>
-          <button class="nav-link m-tool-btn" data-tool="upload" title="Upload Media (U)">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <div class="w-px h-8 bg-gray-100 mx-1"></div>
+          <button class="nav-link w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" title="Undo" onclick="window.undo()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
           </button>
-          <button class="nav-link m-tool-btn" data-tool="palette" title="Color Palette (C)">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <button class="nav-link w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" title="More Options" id="mb-more-btn">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
           </button>
-          <button class="nav-link m-tool-btn" data-tool="link" title="Web Reference & Embed (L)">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-          </button>
-          <div class="h-px bg-border-light my-1 mx-2"></div>
-          <button class="nav-link" title="Undo (Ctrl+Z)" onclick="window.undo()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg></button>
-          <button class="nav-link" title="Redo (Ctrl+Y)" onclick="window.redo()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"/></svg></button>
-        </nav>
+        </div>
 
         <input type="file" id="mb-file-input" class="hidden" multiple>
       </div>
@@ -194,34 +192,68 @@
     window.selectTool = (tool) => {
       currentTool = tool;
       container.querySelectorAll('.m-tool-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.tool === tool);
+        const isActive = b.dataset.tool === tool;
+        b.classList.toggle('bg-primary', isActive);
+        b.classList.toggle('text-white', isActive);
+        b.classList.toggle('text-text-muted', !isActive);
       });
-      // Update canvas cursor based on tool if needed
       const canvasContainer = document.getElementById('moodboard-container');
       if (canvasContainer) {
         if (tool === 'select') canvasContainer.style.cursor = 'default';
-        else if (tool === 'note' || tool === 'text') canvasContainer.style.cursor = 'crosshair';
-        else canvasContainer.style.cursor = 'copy';
+        else canvasContainer.style.cursor = 'crosshair';
       }
     };
 
     // Tools
     container.querySelectorAll('.m-tool-btn').forEach(btn => {
-      btn.addEventListener('pointerdown', (e) => {
-        e.stopPropagation(); 
-      });
       btn.onclick = (e) => {
         e.stopPropagation();
         const tool = btn.dataset.tool;
         window.selectTool(tool);
 
         if (tool === 'upload') {
-          showUploadChoicePopover(btn.getBoundingClientRect());
-        } else if (tool === 'link') {
-          showAddLinkPopover(btn.getBoundingClientRect());
+          document.getElementById('mb-file-input').click();
         }
       };
     });
+
+    const moreBtn = document.getElementById('mb-more-btn');
+    if (moreBtn) {
+      moreBtn.onclick = (e) => {
+        e.stopPropagation();
+        window.showBottomSheet('more', `
+          <div class="space-y-6">
+            <h3 class="text-lg font-black text-text-dark tracking-tight">Board Options</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <button class="flex flex-col items-start gap-2 p-4 border border-gray-100 rounded-2xl hover:border-primary transition-all group" onclick="window.undo(); window.hideBottomSheet();">
+                <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-primary transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-text-dark">Undo</span>
+              </button>
+              <button class="flex flex-col items-start gap-2 p-4 border border-gray-100 rounded-2xl hover:border-primary transition-all group" onclick="window.redo(); window.hideBottomSheet();">
+                <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-primary transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"></path></svg>
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-text-dark">Redo</span>
+              </button>
+              <button class="flex flex-col items-start gap-2 p-4 border border-gray-100 rounded-2xl hover:border-primary transition-all group" onclick="window.showLinkModal(); window.hideBottomSheet();">
+                <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-primary transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-text-dark">Add Link</span>
+              </button>
+              <button class="flex flex-col items-start gap-2 p-4 border border-gray-100 rounded-2xl hover:border-red-500 transition-all group" onclick="selectedElements.clear(); renderElements(); window.hideBottomSheet();">
+                <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-red-500 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-text-dark">Deselect</span>
+              </button>
+            </div>
+          </div>
+        `);
+      };
+    }
 
     window.addMobileColor = (hex) => {
       const coords = toCanvasCoords({ clientX: window.innerWidth/2, clientY: window.innerHeight/2 });
@@ -419,14 +451,14 @@
     
 
     toolbar.innerHTML = `
-      <button class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-text-dark active:bg-brand active:text-white transition-colors" onclick="document.execCommand('bold')">
+      <button class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-text-dark active:bg-primary active:text-white transition-colors" onclick="document.execCommand('bold')">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6V4zm0 8h9a4 4 0 014 4 4 4 0 01-4 4H6V12z"></path></svg>
       </button>
-      <button class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-text-dark active:bg-brand active:text-white transition-colors" onclick="document.execCommand('italic')">
+      <button class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-text-dark active:bg-primary active:text-white transition-colors" onclick="document.execCommand('italic')">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 20l4-16m-9 16h5m1-16h5"></path></svg>
       </button>
       <div class="w-px h-6 bg-gray-100 mx-1"></div>
-      <button class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-text-dark active:bg-brand active:text-white transition-colors" onclick="document.execCommand('insertUnorderedList')">
+      <button class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-text-dark active:bg-primary active:text-white transition-colors" onclick="document.execCommand('insertUnorderedList')">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 6h16M4 12h16M4 18h16"></path></svg>
       </button>
     `;
@@ -494,7 +526,7 @@
     const card = document.createElement('div');
     card.id = `card-${el.id}`;
     const isSelected = selectedElements.has(el.id);
-    card.className = `m-card group m-card-${el.type} ${isSelected ? 'selected' : ''} shadow-card`;
+    card.className = `m-card group m-card-${el.type} ${isSelected ? 'selected' : ''} shadow-card rounded-[20px] bg-white border border-border-light transition-all`;
     card.style.left = `${el.x}px`;
     card.style.top = `${el.y}px`;
     
@@ -531,12 +563,12 @@
           <div class="m-card-inner-palette h-full flex flex-col p-3">
             <div class="flex justify-between items-center mb-2">
               <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">${el.title || 'Palette'}</div>
-              <button class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-brand" onclick="window.addColorToPalette('${el.id}')">
+              <button class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-primary" onclick="window.addColorToPalette('${el.id}')">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
               </button>
             </div>
             <div class="grid grid-cols-4 gap-2 flex-grow overflow-y-auto pr-1">
-              ${(el.colors || ['#7C6FF7', '#EEECEA']).map((c, i) => `
+              ${(el.colors || ['#6B21FF', '#EEECEA']).map((c, i) => `
                 <div class="relative group aspect-square rounded-lg shadow-sm cursor-pointer border border-black/5" style="background: ${c}" onclick="event.stopPropagation(); window.copyHex('${c}')">
                   <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
                      <button class="text-white hover:text-red-400 transform hover:scale-110 transition-transform" onclick="event.stopPropagation(); window.removeSwatch('${el.id}', ${i})">
@@ -564,13 +596,13 @@
                     <div class="text-[10px] text-gray-400 truncate opacity-80">${el.originalUrl || el.content}</div>
                  </div>
                  <div class="flex flex-col">
-                    <a href="${el.originalUrl || el.content}" target="_blank" class="text-[13px] font-bold text-brand hover:underline cursor-pointer leading-tight line-clamp-2">${el.title || 'Loading video details...'}</a>
-                    <div class="text-[11px] font-black text-[#FF6521] mt-1 tracking-tight">
+                    <a href="${el.originalUrl || el.content}" target="_blank" class="text-[13px] font-bold text-primary hover:underline cursor-pointer leading-tight line-clamp-2">${el.title || 'Loading video details...'}</a>
+                    <div class="text-[11px] font-black text-primary/60 mt-1 tracking-tight">
                       ${(el.description?.match(/#\w+/g) || ['#video', '#inspiration']).slice(0, 3).join(' ')}
                     </div>
                  </div>
               </div>
-              ${el.loading ? `<div class="absolute inset-0 bg-white/20 flex items-center justify-center pointer-events-none"><div class="animate-spin rounded-full h-6 w-6 border-3 border-brand border-t-transparent"></div></div>` : ''}
+              ${el.loading ? `<div class="absolute inset-0 bg-white/20 flex items-center justify-center pointer-events-none"><div class="animate-spin rounded-full h-6 w-6 border-3 border-primary border-t-transparent"></div></div>` : ''}
             </div>
           `;
         } else {
@@ -612,19 +644,19 @@
               </div>
             `}
             <div class="p-4 flex flex-col flex-1 min-w-0">
-               <a href="${el.content}" target="_blank" class="text-[13px] font-bold text-gray-900 line-clamp-2 mb-1.5 leading-snug group-hover/link:text-brand transition-colors hover:underline">${el.title || el.content}</a>
+               <a href="${el.content}" target="_blank" class="text-[13px] font-bold text-gray-900 line-clamp-2 mb-1.5 leading-snug group-hover/link:text-primary transition-colors hover:underline">${el.title || el.content}</a>
                ${el.description ? `<div class="text-[10px] text-gray-500 line-clamp-2 leading-relaxed mb-auto opacity-80">${el.description}</div>` : ''}
                <div class="flex items-center gap-2 mt-4 pt-3 border-t border-gray-50">
                   <div class="w-5 h-5 rounded-md bg-gray-50 flex items-center justify-center shrink-0">
                     <img src="${el.favicon || 'https://www.google.com/s2/favicons?domain=' + el.domain}" class="w-3.5 h-3.5 rounded-sm">
                   </div>
                   <div class="text-[9px] font-black uppercase tracking-widest text-gray-400 truncate max-w-[120px]">${el.domain || 'External Site'}</div>
-                  <a href="${el.content}" target="_blank" class="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-brand/5 text-brand opacity-100 transition-all hover:bg-brand hover:text-white">
+                  <a href="${el.content}" target="_blank" class="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-primary/5 text-primary opacity-100 transition-all hover:bg-primary hover:text-white">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                   </a>
                </div>
             </div>
-            ${el.loading ? `<div class="absolute inset-0 bg-white/80 flex items-center justify-center z-20 backdrop-blur-[2px]"><div class="animate-spin rounded-full h-5 w-5 border-2 border-brand border-t-transparent"></div></div>` : ''}
+              ${el.loading ? `<div class="absolute inset-0 bg-white/80 flex items-center justify-center z-20 backdrop-blur-[2px]"><div class="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent"></div></div>` : ''}
           </div>
         `;
         break;

@@ -1,28 +1,29 @@
 :root {
-  /* Milanote Palette Match */
+  /* New Boardnify Purple Bento Design System */
+  --primary: #6B21FF;
+  --primary-light: #F4F3FF;
+  --bg-main: #F4F3FF;
   --bg-white: #FFFFFF;
-  --bg-canvas: #EEECEA;
-  --bg-thumb: #F5F4F2;
+  --bg-canvas: #F4F3FF;
+  
   --text-main: #1A1916;
-  --text-muted: #8E8A84;
+  --text-muted: #6B6B6B;
   --text-tiny: #A09D98;
-  --border-light: #E2E0DC;
-  --border-medium: #D1CFCD;
   
-  --brand: #7C6FF7;
-  --accent-purple: #7C6FF7;
-  --accent-purple-light: #F1F0FF;
-  --accent-yellow: #F5C842;
+  --border-light: #E8E7F0;
+  --border-medium: #D8D7E0;
   
-  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-floating: 0 12px 40px rgba(0, 0, 0, 0.12);
+  --radius-xl: 32px;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 8px;
   
-  --sidebar-width: 56px;
-  --topbar-height: 52px;
+  --shadow-subtle: 0 4px 12px rgba(107, 33, 255, 0.04);
+  --shadow-card: 0 8px 24px rgba(107, 33, 255, 0.08);
+  --shadow-floating: 0 16px 48px rgba(107, 33, 255, 0.12);
   
-  --transition-fast: 0.15s ease;
-  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --topbar-height: 60px;
+  --bottom-nav-height: 70px;
 }
 
 * {
@@ -30,11 +31,12 @@
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--bg-canvas);
+  font-family: 'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-main);
   color: var(--text-main);
   height: 100vh;
   width: 100vw;
@@ -42,55 +44,45 @@ body {
 }
 
 /* Typography System */
-.text-h1 { font-size: 1.125rem; font-weight: 700; letter-spacing: -0.01em; }
-.card-title { font-size: 1rem; font-weight: 500; line-height: 1.4; color: var(--text-main); }
-.card-body { font-size: 0.875rem; font-weight: 400; line-height: 1.5; color: var(--text-main); }
-.card-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tiny); }
+.text-h1 { font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-main); }
+.text-h2 { font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text-main); }
+.text-body { font-size: 0.875rem; font-weight: 400; line-height: 1.6; color: var(--text-muted); }
+.text-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tiny); }
 
-/* Sidebar Tools */
-.nav-link {
-  min-width: 44px;
-  min-height: 44px;
+/* Global Card */
+.bento-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  border: 1px solid var(--border-light);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bento-card:active {
+  transform: scale(0.98);
+}
+
+/* Primary Button */
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50px;
-  color: var(--text-muted);
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: none;
   cursor: pointer;
-  margin-bottom: 8px;
-  transition: all var(--transition-fast);
-  position: relative;
 }
 
-.nav-link:active {
-  background-color: #E8E6E4;
-  color: var(--text-main);
-}
-
-.nav-link.active {
-  background-color: var(--brand);
-  color: white;
-}
-
-/* Moodboard Canvas Styles */
-.m-dot-grid {
-  background-image: radial-gradient(rgba(0,0,0,0.12) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
-/* Polymorphic Cards */
-.m-card {
-  position: absolute;
-  background: white;
-  border-radius: 2px;
-  box-shadow: var(--shadow-card);
-  transition: outline 0.1s ease, box-shadow 0.1s ease;
-  user-select: none;
-  cursor: grab;
-  /* Sharpen rendering for transformed elements */
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+.btn-primary:active {
+  transform: scale(0.95);
+  opacity: 0.9;
 }
 
 .m-card [contenteditable="true"] {
