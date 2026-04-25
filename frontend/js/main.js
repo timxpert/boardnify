@@ -93,7 +93,9 @@ window.toggleMobileSidebar = function() {
   const sidebar = document.getElementById('m-side-drawer');
   const mobileOverlay = document.getElementById('m-side-drawer-overlay');
   if(!sidebar) return;
+  
   const isClosed = sidebar.classList.contains('-translate-x-full');
+  
   if(isClosed) {
     sidebar.classList.remove('-translate-x-full');
     sidebar.classList.add('translate-x-0');
@@ -149,31 +151,42 @@ if (boardTitleEl) {
   };
 }
 
-document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-    const route = e.currentTarget.dataset.route;
-    window.navigate(route, window.currentProject);
-    if (window.innerWidth < 768) {
-       const sidebar = document.getElementById('m-side-drawer');
-       const overlay = document.getElementById('m-side-drawer-overlay');
-       if(sidebar && !sidebar.classList.contains('-translate-x-full')) {
-           sidebar.classList.add('-translate-x-full');
-           sidebar.classList.remove('translate-x-0');
-           if (overlay) {
-             overlay.classList.add('opacity-0');
-             setTimeout(() => overlay.classList.add('hidden'), 300);
-           }
-       }
+// Initialize navigation listeners
+const initNavigation = () => {
+  document.querySelectorAll('.nav-link').forEach(link => {
+    // Remove existing to avoid double listeners if re-init
+    link.onclick = (e) => {
+      const route = e.currentTarget.dataset.route;
+      window.navigate(route, window.currentProject);
+      
+      // Close mobile sidebar if open
+      const sidebar = document.getElementById('m-side-drawer');
+      if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+        window.toggleMobileSidebar();
+      }
+    };
+  });
+
+  // Client Invite Buttons
+  const inviteBtns = ['sidebar-invite-btn', 'mobile-sidebar-invite-btn'];
+  inviteBtns.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.onclick = () => {
+        if (window.openInviteModal) window.openInviteModal();
+      };
     }
   });
-});
 
-const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-const mobileOverlay = document.getElementById('m-side-drawer-overlay');
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  const mobileOverlay = document.getElementById('m-side-drawer-overlay');
 
-if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', window.toggleMobileSidebar);
-if(mobileOverlay) mobileOverlay.addEventListener('click', window.toggleMobileSidebar);
+  if(mobileMenuBtn) mobileMenuBtn.onclick = window.toggleMobileSidebar;
+  if(mobileOverlay) mobileOverlay.onclick = window.toggleMobileSidebar;
+};
+
+// Run init on load
+initNavigation();
 
 window.updateNavVisibility = function() {
   const proj = window.appData.projects.find(p => p.id === window.currentProject) || window.appData.projects[0];
