@@ -107,26 +107,19 @@
           <div id="moodboard-elements-layer" class="absolute inset-0 z-10"></div>
         </div>
         
-        <!-- Floating Toolbar (Mobile/Desktop) -->
-        <div class="absolute left-1/2 -translate-x-1/2 bottom-8 flex items-center gap-2 p-2 bg-white/80 backdrop-blur-xl border border-white rounded-[24px] shadow-2xl z-[100] transition-all">
-          <button class="nav-link active m-tool-btn w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" data-tool="select" title="Select (V)">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+        <!-- Floating Toolbar (Image 1 Style) -->
+        <div class="absolute left-1/2 -translate-x-1/2 bottom-10 flex items-center gap-2 p-2 bg-white/90 backdrop-blur-2xl border border-white/50 rounded-[32px] shadow-premium z-[100] transition-all">
+          <button class="flex items-center gap-2 px-5 py-3 rounded-full bg-[#F4F3FF] text-[#6B21FF] hover:bg-purple-100 transition-all m-tool-btn" data-tool="video">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span class="text-[11px] font-black uppercase tracking-widest">Video</span>
           </button>
-          <button class="nav-link m-tool-btn w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" data-tool="note" title="Note (N)">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <button class="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-gray-400 hover:text-[#6B21FF] transition-all m-tool-btn" data-tool="link">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            <span class="text-[11px] font-black uppercase tracking-widest">Link</span>
           </button>
-          <button class="nav-link m-tool-btn w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" data-tool="text" title="Text (T)">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
-          </button>
-          <button class="nav-link m-tool-btn w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" data-tool="upload" title="Upload (U)">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-          </button>
-          <div class="w-px h-8 bg-gray-100 mx-1"></div>
-          <button class="nav-link w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" title="Undo" onclick="window.undo()">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-          </button>
-          <button class="nav-link w-12 h-12 flex items-center justify-center rounded-[18px] text-text-muted hover:text-primary transition-all" title="More Options" id="mb-more-btn">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+          <button class="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-gray-400 hover:text-[#6B21FF] transition-all m-tool-btn" data-tool="text">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+            <span class="text-[11px] font-black uppercase tracking-widest">Text</span>
           </button>
         </div>
 
@@ -366,15 +359,20 @@
       };
     });
 
-    // Top Bar Title
-    const mobileTitle = document.getElementById('mb-mobile-title');
-    if (mobileTitle) {
-      const proj = window.appData.projects.find(p => p.id === window.currentProject) || window.appData.projects[0];
-      mobileTitle.textContent = proj.name || 'Untitled Board';
-      mobileTitle.onblur = () => {
-        proj.name = mobileTitle.textContent;
-        saveBoard();
-      };
+    // Top Bar Refinement for Moodboard
+    const topbar = document.getElementById('m-topbar');
+    if (topbar) {
+       topbar.innerHTML = `
+          <div class="flex items-center gap-3">
+             <div class="w-10 h-10 rounded-2xl bg-[#F4F3FF] flex items-center justify-center text-[#6B21FF]">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+             </div>
+             <span class="font-bold text-lg tracking-tight font-['Cabinet_Grotesk'] text-[#1A1916]">CreativeSpace</span>
+          </div>
+          <button id="global-settings-btn" class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
+             <img id="sidebar-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+          </button>
+       `;
     }
 
     window.handleMobileTap = (id, type) => {
@@ -545,89 +543,46 @@
     const dragBarHtml = `<div class="m-card-drag-bar absolute top-0 left-0 right-0 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10"><svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 10.001 4.001A2 2 0 007 2zm0 6a2 2 0 10.001 4.001A2 2 0 007 8zm0 6a2 2 0 10.001 4.001A2 2 0 007 14zm6-12a2 2 0 10.001 4.001A2 2 0 0013 2zm0 6a2 2 0 10.001 4.001A2 2 0 0013 8zm0 6a2 2 0 10.001 4.001A2 2 0 0013 14z"></path></svg></div>`;
 
     switch(el.type) {
-      case 'note':
+      case 'video':
         contentHtml = `
           ${dragBarHtml}
-          <div contenteditable="true" class="outline-none card-body min-h-[40px]">${el.content || 'Something important...'}</div>
-        `;
-        break;
-      case 'image':
-        contentHtml = `
-          ${dragBarHtml}
-          <img src="${el.content}" draggable="false" class="block w-full h-full object-cover rounded-lg overflow-hidden pointer-events-none">
-        `;
-        break;
-      case 'palette':
-        contentHtml = `
-          ${dragBarHtml}
-          <div class="m-card-inner-palette h-full flex flex-col p-3">
-            <div class="flex justify-between items-center mb-2">
-              <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">${el.title || 'Palette'}</div>
-              <button class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-primary" onclick="window.addColorToPalette('${el.id}')">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-              </button>
-            </div>
-            <div class="grid grid-cols-4 gap-2 flex-grow overflow-y-auto pr-1">
-              ${(el.colors || ['#6B21FF', '#EEECEA']).map((c, i) => `
-                <div class="relative group aspect-square rounded-lg shadow-sm cursor-pointer border border-black/5" style="background: ${c}" onclick="event.stopPropagation(); window.copyHex('${c}')">
-                  <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
-                     <button class="text-white hover:text-red-400 transform hover:scale-110 transition-transform" onclick="event.stopPropagation(); window.removeSwatch('${el.id}', ${i})">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                     </button>
+          <div class="m-card-video-inner h-full flex flex-col overflow-hidden rounded-[24px] bg-[#1A1916] shadow-premium">
+            <div class="flex-1 bg-black relative flex items-center justify-center">
+               <div class="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
+                  <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center">
+                     <svg class="w-6 h-6 text-[#6B21FF] ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                   </div>
-                  <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] font-black text-gray-400 opacity-0 group-hover:opacity-100 uppercase tracking-tighter whitespace-nowrap bg-white/90 px-1 rounded shadow-sm transition-all">${c}</div>
-                </div>
-              `).join('')}
+               </div>
+            </div>
+            <div class="p-5 flex flex-col gap-1">
+               <div class="text-[10px] font-black text-[#6B21FF] uppercase tracking-[0.2em]">PROCESS VIDEO</div>
+               <div class="text-lg font-bold text-white font-['Cabinet_Grotesk'] leading-tight">${el.title || 'Retro-Futurism Synth Patch'}</div>
             </div>
           </div>
         `;
         break;
-      case 'video':
-        if (el.isEmbed) {
-          contentHtml = `
-            ${dragBarHtml}
-            <div class="m-card-video-inner h-full flex flex-col overflow-hidden rounded-lg bg-gray-50 border border-black/5">
-              <div class="flex-1 bg-black relative">
-                <iframe src="${el.content}" width="${el.width}" height="${el.height}" class="w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-              </div>
-              <div class="m-card-video-footer p-4 bg-white shrink-0 border-t border-gray-100 flex flex-col gap-1.5">
-                 <div class="flex items-center gap-2 overflow-hidden">
-                    <img src="${el.favicon || (el.originalUrl?.includes('youtube.com') ? 'https://www.youtube.com/favicon.ico' : 'https://vimeo.com/favicon.ico')}" class="w-3.5 h-3.5 shrink-0 rounded-sm">
-                    <div class="text-[10px] text-gray-400 truncate opacity-80">${el.originalUrl || el.content}</div>
-                 </div>
-                 <div class="flex flex-col">
-                    <a href="${el.originalUrl || el.content}" target="_blank" class="text-[13px] font-bold text-primary hover:underline cursor-pointer leading-tight line-clamp-2">${el.title || 'Loading video details...'}</a>
-                    <div class="text-[11px] font-black text-primary/60 mt-1 tracking-tight">
-                      ${(el.description?.match(/#\w+/g) || ['#video', '#inspiration']).slice(0, 3).join(' ')}
-                    </div>
-                 </div>
-              </div>
-              ${el.loading ? `<div class="absolute inset-0 bg-white/20 flex items-center justify-center pointer-events-none"><div class="animate-spin rounded-full h-6 w-6 border-3 border-primary border-t-transparent"></div></div>` : ''}
-            </div>
-          `;
-        } else {
-          contentHtml = `
-            ${dragBarHtml}
-            <div class="m-card-video-creative h-full flex flex-col overflow-hidden rounded-md bg-white border border-gray-100 group/v shadow-sm">
-              <div class="v-preview-container flex-1 bg-black relative overflow-hidden">
-                ${el.thumbnail ? 
-                  `<img src="${el.thumbnail}" class="w-full h-full object-cover group-hover/v:scale-105 transition-transform duration-[2s]">` : 
-                  `<div class="w-full h-full flex items-center justify-center bg-gray-900"><svg class="w-8 h-8 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.277A1 1 0 0121 8.677V15.32a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg></div>`
-                }
-                <div class="v-play-overlay absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px] opacity-0 group-hover/v:opacity-100 transition-all duration-500">
-                  <div class="w-14 h-14 rounded-full bg-black/60 flex items-center justify-center border border-white/20 transform scale-90 group-hover/v:scale-100 transition-transform duration-500">
-                    <svg class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                  </div>
-                </div>
-              </div>
-              <div class="v-minimal-footer">
-                <div class="v-minimal-title truncate">${el.title || 'Untitled Video'}</div>
-                <div class="v-minimal-size">${el.size || '0 MB'}</div>
-              </div>
-              ${el.loading ? `<div class="absolute inset-0 bg-white/20 flex items-center justify-center pointer-events-none"><div class="animate-spin rounded-full h-6 w-6 border-3 border-brand border-t-transparent"></div></div>` : ''}
-            </div>
-          `;
-        }
+      case 'note':
+        contentHtml = `
+          ${dragBarHtml}
+          <div class="m-card-note-inner h-full flex flex-col p-6 rounded-[24px] bg-[#F4F3FF] border border-[#EBE9FF] shadow-subtle">
+             <div class="text-[10px] font-black text-[#6B21FF] uppercase tracking-[0.2em] mb-4">NOTE</div>
+             <div contenteditable="true" class="outline-none text-md font-bold text-[#6B21FF] leading-relaxed">${el.content || 'Something important...'}</div>
+          </div>
+        `;
+        break;
+      case 'link':
+        contentHtml = `
+          ${dragBarHtml}
+          <div class="m-card-link-inner h-full flex items-center gap-4 p-4 rounded-[24px] bg-white border border-gray-100 shadow-premium">
+             <div class="w-16 h-16 rounded-2xl bg-gray-50 overflow-hidden shrink-0">
+                <img src="${el.thumbnail || 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=200&auto=format&fit=crop'}" class="w-full h-full object-cover">
+             </div>
+             <div class="flex flex-col min-w-0">
+                <div class="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-0.5">${el.domain || 'behance.net'}</div>
+                <div class="text-[13px] font-bold text-[#1A1916] truncate leading-snug">${el.title || 'Vaporwave Aesthetic Gradients'}</div>
+             </div>
+          </div>
+        `;
         break;
       case 'link':
         contentHtml = `
@@ -1727,23 +1682,11 @@ async function addVideoLink(url, x, y) {
 
   function renderConnections() {
     if (!svgLayer) return;
-    const connectionsGroup = document.getElementById('moodboard-connections-group');
-    if (!connectionsGroup) return;
-
-    // Use a WeakMap or a regular Map to track existing SVG elements for connections
-    if (!window._connectionElements) window._connectionElements = new Map();
-    const activeIds = new Set();
-
+    const group = document.getElementById('moodboard-connections-group');
+    if (!group) return;
+    group.innerHTML = '';
+    
     connections.forEach(conn => {
-      const start = getPointForElement(conn.fromId, conn.startPos);
-      const end = getPointForElement(conn.toId, conn.endPos);
-      
-      if (start && end) {
-        activeIds.add(conn.id);
-        let group = window._connectionElements.get(conn.id);
-        let path;
-
-        if (!group || !group.parentNode) {
           group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
           path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
           group.appendChild(path);

@@ -1,0 +1,31 @@
+/* High Fidelity Redesign Utilities */
+
+/* Bottom Navigation Active State */
+.nav-link.active .nav-active-bg {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+.nav-link.active svg, 
+.nav-link.active span {
+  color: white !important;
+}
+
+/* Dotted Grid Utility */
+.bg-dotted-grid {
+  background-image: radial-gradient(#6B21FF 0.8px, transparent 0.8px);
+  background-size: 24px 24px;
+}
+
+/* Custom Button Shadows */
+.shadow-premium {
+  box-shadow: 0 10px 25px -5px rgba(107, 33, 255, 0.2), 0 8px 10px -6px rgba(107, 33, 255, 0.1);
+}
+
+/* Glassmorphism Refinements */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}

@@ -10,84 +10,105 @@
   let cropper = null;
 
   window.initSettings = async function(container) {
-    container.innerHTML = `
-      <div class="view-container animate-fade-in pb-24">
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-          <div>
-            <h1 class="text-2xl font-bold text-text-dark tracking-tight">Account Settings</h1>
-            <p class="text-[10px] font-black text-text-muted uppercase tracking-widest mt-1">Manage your workspace and profile</p>
-          </div>
-          <button id="settings-save-btn" class="px-6 py-3 bg-brand text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:scale-105 transition-all">
-            Save Changes
+    // Override Topbar for Settings View (Image 2 style)
+    const topbar = document.getElementById('m-topbar');
+    if (topbar) {
+       topbar.innerHTML = `
+          <button onclick="window.navigate('dashboard')" class="p-2 text-gray-400 hover:text-text-dark transition-colors">
+             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
           </button>
+          <span class="font-bold text-lg tracking-tight font-['Cabinet_Grotesk'] text-[#1A1916]">Profile & Settings</span>
+          <button class="p-2 text-gray-400 hover:text-[#6B21FF] transition-colors">
+             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+          </button>
+       `;
+    }
+
+    container.innerHTML = `
+      <div class="view-container animate-fade-in pb-24 px-6 pt-8">
+        <!-- Profile Header (Image 2 Style) -->
+        <div class="flex flex-col items-center mb-10">
+          <div class="relative mb-6">
+             <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-premium">
+                <img id="settings-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+             </div>
+             <button id="profile-change-btn" class="absolute bottom-1 right-1 w-10 h-10 bg-[#6B21FF] text-white rounded-full flex items-center justify-center border-4 border-white shadow-lg hover:scale-110 transition-transform">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+             </button>
+             <input type="file" id="profile-upload-input" class="hidden" accept="image/*">
+          </div>
+          <div class="flex items-center gap-2 mb-1">
+             <h2 class="text-2xl font-bold text-[#1A1916] font-['Cabinet_Grotesk']" id="set-display-name-val">Elena Rodriguez</h2>
+             <svg class="w-5 h-5 text-blue-500 fill-current" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293l-4 4a1 1 0 01-1.414 0l-2-2a1 1 0 111.414-1.414L9 10.586l3.293-3.293a1 1 0 011.414 1.414z"></path></svg>
+          </div>
+          <div class="inline-flex items-center px-3 py-1 bg-[#F4F3FF] text-[#6B21FF] rounded-full text-[10px] font-black uppercase tracking-widest">
+             PRO PLAN MEMBER
+          </div>
         </div>
 
         <div class="space-y-6">
-          <!-- Profile Card -->
-          <div class="bento-card p-6">
-            <div class="flex items-center gap-6">
-              <div class="relative group cursor-pointer" id="profile-change-btn">
-                <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-100 group-hover:border-brand transition-all">
-                  <img id="settings-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
-                </div>
-                <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
-                </div>
-                <input type="file" id="profile-upload-input" class="hidden" accept="image/*">
-              </div>
-              <div>
-                <h3 class="text-sm font-bold text-text-dark mb-1">Your Profile Photo</h3>
-                <p class="text-[9px] font-black text-text-muted uppercase tracking-widest">JPG, GIF or PNG. Max 2MB.</p>
-              </div>
-            </div>
-          </div>
-
           <!-- Account Details Card -->
-          <div class="bento-card p-6 space-y-6">
-            <div class="space-y-2">
-              <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Display Name</label>
-              <input type="text" id="set-display-name" class="w-full p-4 rounded-xl border border-gray-100 focus:border-brand outline-none transition-all text-xs font-bold text-text-dark bg-gray-50/50">
-            </div>
-            <div class="space-y-2">
-              <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Email Address</label>
-              <input type="email" id="set-email" class="w-full p-4 rounded-xl border border-gray-100 outline-none text-xs font-bold text-text-muted bg-gray-100/50 cursor-not-allowed" readonly>
-            </div>
-            <div class="space-y-2">
-              <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Bio / Introduction</label>
-              <textarea id="set-bio" class="w-full h-24 p-4 rounded-xl border border-gray-100 focus:border-brand outline-none transition-all text-xs font-bold text-text-dark bg-gray-50/50 resize-none"></textarea>
-            </div>
+          <div class="bg-white rounded-[32px] p-8 border border-gray-100 shadow-premium">
+             <div class="flex items-center justify-between mb-8">
+                <h3 class="text-lg font-bold text-[#1A1916] font-['Cabinet_Grotesk']">Account Details</h3>
+                <button id="settings-save-btn" class="text-[10px] font-black text-[#6B21FF] uppercase tracking-widest hover:underline">SAVE</button>
+             </div>
+             
+             <div class="space-y-6">
+                <div class="space-y-2">
+                   <label class="text-[10px] font-black text-gray-300 uppercase tracking-[0.1em]">Full Name</label>
+                   <input type="text" id="set-display-name" value="Elena Rodriguez" class="w-full text-sm font-bold text-[#1A1916] outline-none border-b border-gray-100 pb-2 focus:border-[#6B21FF] transition-colors">
+                </div>
+                <div class="space-y-2">
+                   <label class="text-[10px] font-black text-gray-300 uppercase tracking-[0.1em]">Email Address</label>
+                   <input type="email" id="set-email" class="w-full text-sm font-bold text-gray-400 outline-none border-b border-gray-100 pb-2 bg-transparent" readonly>
+                </div>
+                <div class="space-y-2">
+                   <label class="text-[10px] font-black text-gray-300 uppercase tracking-[0.1em]">Studio / Company</label>
+                   <input type="text" id="set-company" value="Boardnify Studios" class="w-full text-sm font-bold text-[#1A1916] outline-none border-b border-gray-100 pb-2 focus:border-[#6B21FF] transition-colors">
+                </div>
+                <div class="space-y-2">
+                   <label class="text-[10px] font-black text-gray-300 uppercase tracking-[0.1em]">Bio / Status</label>
+                   <textarea id="set-bio" class="w-full text-sm font-bold text-[#1A1916] outline-none border-b border-gray-100 pb-2 focus:border-[#6B21FF] transition-colors resize-none h-8 overflow-hidden">Creative Director & Lead Designer</textarea>
+                </div>
+             </div>
           </div>
 
-          <!-- Interface Preferences -->
-          <div class="bento-card p-6 space-y-8">
-            <div>
-              <h3 class="text-xs font-black text-text-dark uppercase tracking-widest mb-6">Interface Theme</h3>
-              <div class="grid grid-cols-3 gap-3" id="set-theme-grid"></div>
-            </div>
-            
-            <div>
-              <h3 class="text-xs font-black text-text-dark uppercase tracking-widest mb-6">Typography Scale</h3>
-              <div class="flex gap-2 p-1.5 bg-gray-50 rounded-2xl w-full">
-                <button data-size="small" class="font-size-btn flex-1 py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all">Small</button>
-                <button data-size="medium" class="font-size-btn flex-1 py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all">Medium</button>
-                <button data-size="large" class="font-size-btn flex-1 py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all">Large</button>
-              </div>
-            </div>
+          <!-- Appearance Card -->
+          <div class="bg-white rounded-[32px] p-8 border border-gray-100 shadow-premium">
+             <h3 class="text-lg font-bold text-[#1A1916] font-['Cabinet_Grotesk'] mb-8">Appearance</h3>
+             
+             <div class="space-y-8">
+                <div>
+                   <label class="text-[10px] font-black text-gray-300 uppercase tracking-[0.1em] block mb-4">Color Theme</label>
+                   <div class="flex gap-2 p-1.5 bg-[#F4F3FF] rounded-2xl">
+                      <button onclick="window.updateTheme('light')" class="flex-1 py-3 bg-white text-[#6B21FF] shadow-sm rounded-xl text-[10px] font-black uppercase tracking-widest theme-chip active">Light</button>
+                      <button onclick="window.updateTheme('dark')" class="flex-1 py-3 text-gray-400 rounded-xl text-[10px] font-black uppercase tracking-widest theme-chip">Dark</button>
+                      <button onclick="window.updateTheme('system')" class="flex-1 py-3 text-gray-400 rounded-xl text-[10px] font-black uppercase tracking-widest theme-chip">System</button>
+                   </div>
+                </div>
+
+                <div>
+                   <label class="text-[10px] font-black text-gray-300 uppercase tracking-[0.1em] block mb-6">Accent Saturation</label>
+                   <div class="relative pt-1">
+                      <div class="flex items-center justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
+                         <span>Soft</span>
+                         <span>Vibrant</span>
+                      </div>
+                      <div class="h-2 bg-[#F4F3FF] rounded-full relative">
+                         <div class="absolute inset-y-0 left-0 bg-[#6B21FF] rounded-full w-[75%]"></div>
+                         <div class="absolute top-1/2 left-[75%] -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white border-4 border-[#6B21FF] rounded-full shadow-lg"></div>
+                      </div>
+                   </div>
+                </div>
+             </div>
           </div>
 
-          <!-- Security & Privacy -->
-          <div class="bento-card p-6">
-            <h3 class="text-xs font-black text-text-dark uppercase tracking-widest mb-6">Security & Danger Zone</h3>
-            <div class="space-y-3">
-              <button id="set-reset-pw" class="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 text-[10px] font-black uppercase tracking-widest text-text-dark transition-all text-left flex items-center justify-between">
-                <span>Reset My Password</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-              </button>
-              <button id="set-delete-account" class="w-full p-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all text-left">
-                Delete My Workspace
-              </button>
-            </div>
+          <!-- Danger Zone Card -->
+          <div class="rounded-[32px] p-8 border-2 border-red-50 bg-red-50/10 shadow-sm">
+             <h3 class="text-lg font-bold text-red-600 font-['Cabinet_Grotesk'] mb-2">Danger Zone</h3>
+             <p class="text-[11px] font-medium text-red-400 mb-6">Permanently remove your workspace and all data.</p>
+             <button id="set-delete-account" class="w-full py-4 bg-red-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-200">Delete Workspace</button>
           </div>
         </div>
       </div>
