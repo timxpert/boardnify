@@ -468,15 +468,24 @@ body {
   }
 
 .m-card-inner {
-  pointer-events: none; /* Prevents inner content blocking resize handles */
+  pointer-events: auto; /* Ensure cards are interactive by default */
+  position: relative;
+  z-index: 1;
 }
+
+/* Ensure resize handles are ALWAYS on top of card content */
+.m-resize-handle {
+  z-index: 50 !important;
+  pointer-events: auto !important;
+}
+
 .m-card-inner [contenteditable],
 .m-card-inner iframe,
 .m-card-inner video,
 .m-card-inner img,
 .m-card-inner a,
 .m-card-inner button {
-  pointer-events: all; /* Re-enable only for interactive children */
+  pointer-events: auto;
 }
 .m-handle-tl { top: -7px; left: -7px; cursor: nw-resize; }
 .m-handle-tr { top: -7px; right: -7px; cursor: ne-resize; }
