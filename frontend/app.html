@@ -179,30 +179,80 @@
   <div id="app-shell">
     <!-- Top Bar -->
     <header class="m-topbar" id="m-topbar">
-      <!-- Left: Avatar -->
-      <button id="global-settings-btn" class="w-10 h-10 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0">
-         <img id="sidebar-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
-      </button>
+      <div class="flex items-center gap-3">
+        <!-- Hamburger Menu Button -->
+        <button id="mobile-menu-btn" class="p-2 text-gray-400 hover:text-[#6B21FF] transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+
+        <!-- Left: Avatar (Moved next to menu) -->
+        <button id="global-settings-btn" class="w-9 h-9 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0">
+           <img id="sidebar-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+        </button>
+      </div>
 
       <!-- Center: Logo -->
       <div class="flex items-center gap-2 board-title-center">
-        <div class="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
+        <div class="w-6 h-6 bg-[#6B21FF] rounded-lg flex items-center justify-center">
           <div class="w-2 h-2 bg-white rounded-sm"></div>
         </div>
-        <span class="font-black text-lg tracking-tight">Boardnify</span>
+        <span class="font-black text-lg tracking-tight font-['Cabinet_Grotesk'] text-[#1A1916]">Boardnify</span>
       </div>
 
       <!-- Right: Search + Bell -->
       <div class="flex items-center gap-1">
-        <button class="p-2 text-gray-400 hover:text-primary transition-colors">
+        <button class="p-2 text-gray-400 hover:text-[#6B21FF] transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </button>
-        <button class="p-2 text-gray-400 hover:text-primary transition-colors relative">
+        <button class="p-2 text-gray-400 hover:text-[#6B21FF] transition-colors relative">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-          <span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
+          <span class="absolute top-2 right-2 w-2 h-2 bg-[#6B21FF] rounded-full border-2 border-white"></span>
         </button>
       </div>
     </header>
+
+    <!-- Side Drawer Overlay -->
+    <div id="m-side-drawer-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1100] hidden opacity-0 transition-opacity duration-300"></div>
+
+    <!-- Side Drawer (Bento Style) -->
+    <aside id="m-side-drawer" class="fixed inset-y-0 left-0 w-72 bg-white z-[1200] transform -translate-x-full transition-transform duration-300 p-6 flex flex-col shadow-2xl">
+       <div class="flex items-center gap-3 mb-10">
+          <div class="w-10 h-10 bg-[#6B21FF] rounded-2xl flex items-center justify-center">
+             <div class="w-3 h-3 bg-white rounded-md"></div>
+          </div>
+          <div>
+             <h2 class="font-black text-xl font-['Cabinet_Grotesk'] text-[#1A1916]">Boardnify</h2>
+             <p class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Enterprise v2.0</p>
+          </div>
+       </div>
+
+       <div class="space-y-1 flex-1">
+          <button onclick="window.navigate('dashboard'); toggleMobileSidebar()" class="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-[#F4F3FF] text-gray-400 hover:text-[#6B21FF] transition-all font-bold text-sm">
+             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+             Dashboard
+          </button>
+          <button onclick="window.navigate('kanban'); toggleMobileSidebar()" class="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-[#F4F3FF] text-gray-400 hover:text-[#6B21FF] transition-all font-bold text-sm">
+             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+             Technical Progress
+          </button>
+          <button onclick="window.navigate('motionprojects'); toggleMobileSidebar()" class="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-[#F4F3FF] text-gray-400 hover:text-[#6B21FF] transition-all font-bold text-sm">
+             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+             Motion Projects
+          </button>
+          <div class="h-px bg-gray-50 my-4"></div>
+          <button onclick="window.navigate('trash'); toggleMobileSidebar()" class="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all font-bold text-sm">
+             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+             Trash
+          </button>
+       </div>
+
+       <div class="mt-auto pt-6 border-t border-gray-50">
+          <button onclick="signOut()" class="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 text-gray-400 hover:text-text-dark transition-all font-bold text-sm">
+             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+             Sign Out
+          </button>
+       </div>
+    </aside>
 
     <!-- Main Content -->
     <main id="app" class="flex flex-col w-full h-full min-h-0 overflow-y-auto">

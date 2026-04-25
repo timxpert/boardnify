@@ -7,10 +7,10 @@ const routes = {
   dashboard: window.initDashboard,
   moodboard: window.initMoodboard,
   script: window.initScript,
-  task_tracker: window.initKanban,
-  style_frames: window.initStyleFrames,
-  motion_project: window.initMotionProjects,
-  review: window.initReviews,
+  kanban: window.initKanban,
+  styleframes: window.initStyleFrames,
+  motionprojects: window.initMotionProjects,
+  reviews: window.initReviews,
   trash: window.initTrash,
   storyboard: window.initStoryboard,
   settings: window.initSettings
@@ -30,9 +30,9 @@ window.navigate = function(route, projectId = null, skipHash = false) {
   const boardTitleEl = document.getElementById('active-board-title');
   const targetLink = document.querySelector(`.nav-link[data-route="${route}"]`);
   
-  const proj = window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0];
+  const proj = (window.appData && window.appData.projects) ? (window.appData.projects.find(p => p.id === projectId) || window.appData.projects[0]) : null;
 
-  if (!proj && route !== 'dashboard' && route !== 'trash') {
+  if (!proj && route !== 'dashboard' && route !== 'trash' && route !== 'settings') {
     app.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full text-center p-12">
         <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mb-6 font-sans">
@@ -40,14 +40,14 @@ window.navigate = function(route, projectId = null, skipHash = false) {
         </div>
         <h2 class="text-xl font-bold text-text-dark mb-2">No Project Selected</h2>
         <p class="text-xs text-text-muted font-medium mb-8">Please select or create a project to view this board.</p>
-        <button onclick="window.navigate('dashboard')" class="px-8 py-3 bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl">Back to Dashboard</button>
+        <button onclick="window.navigate('dashboard')" class="px-8 py-3 bg-[#6B21FF] text-white text-[10px] font-black uppercase tracking-widest rounded-xl">Back to Dashboard</button>
       </div>
     `;
     return;
   }
 
-  if (activeLabelEl && targetLink) {
-    activeLabelEl.textContent = targetLink.dataset.label || route.charAt(0).toUpperCase() + route.slice(1);
+  if (activeLabelEl) {
+    activeLabelEl.textContent = targetLink ? (targetLink.dataset.label || route.charAt(0).toUpperCase() + route.slice(1)) : route.charAt(0).toUpperCase() + route.slice(1);
   }
 
   if (boardTitleEl) {
@@ -67,18 +67,15 @@ window.navigate = function(route, projectId = null, skipHash = false) {
     }
   });
   
-  app.innerHTML = '';
   if (routes[route]) {
     // Show a skeleton loader inside the view container before initializing
     app.innerHTML = `
-      <div class="view-container animate-pulse p-10 space-y-8">
-        <div class="h-12 w-1/3 bg-gray-100 rounded-xl"></div>
-        <div class="grid grid-cols-1 gap-6">
-          <div class="h-64 bg-gray-50 rounded-2xl"></div>
-          <div class="h-64 bg-gray-50 rounded-2xl"></div>
-          <div class="h-64 bg-gray-50 rounded-2xl"></div>
+      <div class="view-container animate-pulse p-10 space-y-8 h-full bg-[#FDFCFB]">
+        <div class="h-12 w-1/3 bg-gray-100 rounded-2xl"></div>
+        <div class="space-y-4">
+          <div class="h-64 bg-white border border-gray-100 rounded-[32px] shadow-sm"></div>
+          <div class="h-64 bg-white border border-gray-100 rounded-[32px] shadow-sm"></div>
         </div>
-        <div class="h-96 bg-gray-50 rounded-2xl w-full"></div>
       </div>
     `;
     
@@ -88,7 +85,29 @@ window.navigate = function(route, projectId = null, skipHash = false) {
       routes[route](app, socket, projectId);
     }, 150);
   } else {
-    app.innerHTML = '<div class="flex items-center justify-center h-full text-2xl text-gray-500">404 - View not found</div>';
+    app.innerHTML = '<div class="flex items-center justify-center h-full text-2xl text-gray-500 font-[\'Cabinet_Grotesk\'] font-bold">View Not Found</div>';
+  }
+};
+
+window.toggleMobileSidebar = function() {
+  const sidebar = document.getElementById('m-side-drawer');
+  const mobileOverlay = document.getElementById('m-side-drawer-overlay');
+  if(!sidebar) return;
+  const isClosed = sidebar.classList.contains('-translate-x-full');
+  if(isClosed) {
+    sidebar.classList.remove('-translate-x-full');
+    sidebar.classList.add('translate-x-0');
+    if (mobileOverlay) {
+      mobileOverlay.classList.remove('hidden');
+      setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
+    }
+  } else {
+    sidebar.classList.add('-translate-x-full');
+    sidebar.classList.remove('translate-x-0');
+    if (mobileOverlay) {
+      mobileOverlay.classList.add('opacity-0');
+      setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
+    }
   }
 };
 
@@ -151,31 +170,10 @@ document.querySelectorAll('.nav-link').forEach(link => {
 });
 
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-const sidebar = document.getElementById('m-side-drawer');
 const mobileOverlay = document.getElementById('m-side-drawer-overlay');
 
-function toggleMobileSidebar() {
-  if(!sidebar) return;
-  const isOpen = sidebar.classList.contains('-translate-x-full');
-  if(isOpen) {
-    sidebar.classList.remove('-translate-x-full');
-    sidebar.classList.add('translate-x-0');
-    if (mobileOverlay) {
-      mobileOverlay.classList.remove('hidden');
-      setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
-    }
-  } else {
-    sidebar.classList.add('-translate-x-full');
-    sidebar.classList.remove('translate-x-0');
-    if (mobileOverlay) {
-      mobileOverlay.classList.add('opacity-0');
-      setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
-    }
-  }
-}
-
-if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
-if(mobileOverlay) mobileOverlay.addEventListener('click', toggleMobileSidebar);
+if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', window.toggleMobileSidebar);
+if(mobileOverlay) mobileOverlay.addEventListener('click', window.toggleMobileSidebar);
 
 window.updateNavVisibility = function() {
   const proj = window.appData.projects.find(p => p.id === window.currentProject) || window.appData.projects[0];
@@ -843,38 +841,29 @@ window.bootApp = async function() {
     }
 
     try {
-      const [projRes, revRes, actRes, trashRes, libRes, invitesRes] = await Promise.all([
-        window.supabaseClient.from('projects').select('*').order('last_updated', { ascending: false }),
-        window.supabaseClient.from('reviews').select('*'),
-        window.supabaseClient.from('activity').select('*').order('created_at', { ascending: false }).limit(20),
-        window.supabaseClient.from('trash').select('*').order('deleted_at', { ascending: false }),
-        window.supabaseClient.from('client_invites').select('*')
-      ]);
-
-      if (projRes.data && projRes.data.length > 0) {
-        window.appData.projects = projRes.data;
-      } else {
-        window.appData.projects = [];
-      }
-      
-      // Resilient sync: If one table fails, don't crash the whole app boot
-      const safeSync = async (table, targetProp) => {
+      // Resilient sync: Fetch each table individually to prevent failure if one is missing
+      const safeSync = async (table, targetProp, order = null) => {
         try {
-          const res = await window.supabaseClient.from(table).select('*').limit(50);
-          if (res.data && res.data.length > 0) window.appData[targetProp] = res.data;
+          let query = window.supabaseClient.from(table).select('*');
+          if (order) query = query.order(order.field, { ascending: order.asc });
+          const { data, error } = await query.limit(50);
+          if (data) window.appData[targetProp] = data;
+          if (error) console.warn(`[Sync] Table error: ${table}`, error);
         } catch (e) {
-          console.warn(`[Sync] Failed to fetch table: ${table}. Tables may not exist yet.`, e);
+          console.warn(`[Sync] Failed to fetch table: ${table}`, e);
         }
       };
 
-      await safeSync('reviews', 'reviews');
-      await safeSync('activity', 'activity');
-      await safeSync('trash', 'trash');
-      await safeSync('client_invites', 'client_invites');
+      await Promise.all([
+        safeSync('projects', 'projects', { field: 'last_updated', asc: false }),
+        safeSync('reviews', 'reviews'),
+        safeSync('activity', 'activity', { field: 'created_at', asc: false }),
+        safeSync('trash', 'trash', { field: 'deleted_at', asc: false }),
+        safeSync('client_invites', 'client_invites')
+      ]);
 
     } catch(err) {
       console.error("Supabase initial sync core failed:", err);
-      // Only show error if core projects/session failed
     }
 
     if (typeof updateRoleUI === 'function') updateRoleUI(true);
