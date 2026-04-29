@@ -93,7 +93,7 @@
     container.innerHTML = `
       <div id="moodboard-container" class="relative w-full h-full overflow-hidden touch-none" style="background: var(--bg-canvas);">
         <!-- Dot Grid Background -->
-        <div class="absolute inset-0 pointer-events-none opacity-40" style="background-image: radial-gradient(#6B21FF 0.5px, transparent 0.5px); background-size: 24px 24px;"></div>
+        <div class="absolute inset-0 pointer-events-none opacity-40" style="background-image: radial-gradient(#6B46FA 0.5px, transparent 0.5px); background-size: 24px 24px;"></div>
         
         <div id="moodboard-canvas" class="absolute inset-0 origin-top-left" style="width: 5000px; height: 5000px; transform: translate(0px, 0px) scale(1);">
           <svg id="moodboard-svg-layer" class="absolute inset-0 pointer-events-auto w-full h-full" style="z-index: 5;">
@@ -107,19 +107,22 @@
           <div id="moodboard-elements-layer" class="absolute inset-0 z-10"></div>
         </div>
         
-        <!-- Floating Toolbar (Image 1 Style) -->
-        <div class="absolute left-1/2 -translate-x-1/2 bottom-10 flex items-center gap-2 p-2 bg-white/90 backdrop-blur-2xl border border-white/50 rounded-[32px] shadow-premium z-[100] transition-all">
-          <button class="flex items-center gap-2 px-5 py-3 rounded-full bg-[#F4F3FF] text-[#6B21FF] hover:bg-purple-100 transition-all m-tool-btn" data-tool="video">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <span class="text-[11px] font-black uppercase tracking-widest">Video</span>
+        <!-- Floating Toolbar -->
+        <div class="absolute left-1/2 -translate-x-1/2 bottom-10 flex items-center gap-1.5 p-1.5 bg-white/90 backdrop-blur-2xl border border-[#E5E0FF] rounded-[24px] shadow-floating z-[100]">
+          <button class="w-12 h-12 rounded-[18px] bg-[#6B46FA] text-white flex items-center justify-center m-tool-btn shadow-lg shadow-purple-200" data-tool="select">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
           </button>
-          <button class="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-gray-400 hover:text-[#6B21FF] transition-all m-tool-btn" data-tool="link">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-            <span class="text-[11px] font-black uppercase tracking-widest">Link</span>
+          <button class="w-12 h-12 rounded-[18px] bg-white text-gray-400 hover:text-[#6B46FA] flex items-center justify-center m-tool-btn" data-tool="video">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           </button>
-          <button class="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-gray-400 hover:text-[#6B21FF] transition-all m-tool-btn" data-tool="text">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
-            <span class="text-[11px] font-black uppercase tracking-widest">Text</span>
+          <button class="w-12 h-12 rounded-[18px] bg-white text-gray-400 hover:text-[#6B46FA] flex items-center justify-center m-tool-btn" data-tool="text">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+          </button>
+          <button class="w-12 h-12 rounded-[18px] bg-white text-gray-400 hover:text-[#6B46FA] flex items-center justify-center m-tool-btn" data-tool="arrow">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+          <button class="w-12 h-12 rounded-[18px] bg-white text-gray-400 hover:text-[#6B46FA] flex items-center justify-center m-tool-btn" data-tool="upload">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
           </button>
         </div>
 

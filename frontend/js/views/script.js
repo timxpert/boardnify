@@ -12,37 +12,37 @@ window.initScript = function(container, socket, projectId) {
 
   // --- HTML TEMPLATES ---
   const dashboardLayout = `
-    <div class="h-full flex flex-col bg-[#F9F9FB] overflow-y-auto scrollbar-hide">
-      <header class="flex items-center justify-between px-10 py-8 shrink-0">
+    <div class="h-full flex flex-col bg-bg-canvas overflow-y-auto scrollbar-hide">
+      <header class="flex items-center justify-between px-10 py-10 shrink-0">
         <div>
-          <h1 class="text-3xl font-black text-text-dark tracking-tight">Scripts</h1>
-          <p class="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mt-1">Project Library & Writing Suite</p>
+          <h1 class="text-3xl font-black text-text-main tracking-tight font-['Cabinet_Grotesk']">Scripts</h1>
+          <p class="text-[10px] font-black text-primary uppercase tracking-[0.2em] mt-1 opacity-70">Project Library & Writing Suite</p>
         </div>
         <div class="flex gap-3">
-          <button id="btn-upload-script" class="px-6 py-2.5 bg-white border border-gray-200 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-gray-50 smooth-transition flex items-center gap-2">
+          <button id="btn-upload-script" class="px-6 py-3 bg-white border border-border-light text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-gray-50 smooth-transition shadow-subtle flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
             Upload
           </button>
-          <button id="btn-new-script" class="px-6 py-2.5 bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-90 smooth-transition shadow-sm flex items-center gap-2">
+          <button id="btn-new-script" class="px-6 py-3 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:brightness-110 smooth-transition shadow-card flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             New Script
           </button>
         </div>
       </header>
 
-      <div id="scripts-grid" class="px-4 md:px-10 pb-20 grid grid-cols-1 gap-6">
+      <div id="scripts-grid" class="px-10 pb-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <!-- Cards Injected -->
       </div>
 
       <div id="scripts-empty" class="hidden flex-1 flex flex-col items-center justify-center text-center p-20 animate-fade-in">
-        <div class="w-24 h-24 bg-white rounded-[32px] shadow-sm border border-gray-100 flex items-center justify-center mb-8">
-           <svg class="w-10 h-10 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+        <div class="w-24 h-24 bg-white rounded-[40px] shadow-card border border-border-light flex items-center justify-center mb-8">
+           <svg class="w-10 h-10 text-primary/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
         </div>
-        <h2 class="text-xl font-bold text-text-dark mb-2">No scripts for this project</h2>
-        <p class="text-xs text-text-muted font-medium mb-8 max-w-xs">Start drafting your idea from scratch or import an existing document.</p>
+        <h2 class="text-2xl font-black text-text-main mb-3 font-['Cabinet_Grotesk']">No scripts yet</h2>
+        <p class="text-sm text-text-muted font-medium mb-10 max-w-xs leading-relaxed">Start drafting your idea from scratch or import an existing document.</p>
         <div class="flex gap-4">
-           <button class="welcome-new-btn px-8 py-3 bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-brand/20">Blank Script</button>
-           <button class="welcome-upload-btn px-8 py-3 bg-white border border-gray-100 text-[10px] font-black uppercase tracking-widest rounded-xl">Import File</button>
+           <button class="welcome-new-btn px-8 py-4 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-card">Blank Script</button>
+           <button class="welcome-upload-btn px-8 py-4 bg-white border border-border-light text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-subtle">Import File</button>
         </div>
       </div>
     </div>
@@ -50,51 +50,70 @@ window.initScript = function(container, socket, projectId) {
 
   const editorLayout = `
     <div class="h-full flex flex-col bg-white overflow-hidden animate-fade-in">
-      <header class="h-14 border-b border-gray-100 px-8 flex items-center justify-between z-50 bg-white/80 backdrop-blur-md shrink-0">
-         <div class="flex items-center gap-4 flex-1">
-            <button id="editor-back" class="p-2 -ml-2 text-gray-400 hover:text-text-dark smooth-transition">
+      <header class="h-20 border-b border-border-light px-8 flex items-center justify-between z-50 bg-white/95 backdrop-blur-xl shrink-0">
+         <div class="flex items-center gap-6 flex-1">
+            <button id="editor-back" class="p-3 -ml-3 text-gray-400 hover:text-text-main smooth-transition bg-bg-soft rounded-2xl active:scale-95">
                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
             </button>
-            <div class="w-px h-6 bg-gray-100"></div>
-            <input id="script-title-input" type="text" placeholder="Untitled script" class="flex-1 bg-transparent border-none outline-none font-bold text-sm text-text-dark placeholder:text-gray-200">
+            <div class="flex flex-col">
+              <span class="text-[9px] font-black text-primary uppercase tracking-[0.15em] mb-0.5">Project Editor</span>
+              <input id="script-title-input" type="text" placeholder="Untitled script" 
+                class="bg-transparent border-none outline-none font-black text-lg text-text-main placeholder:text-gray-200 p-0 focus:ring-0">
+              <div class="h-0.5 w-full bg-primary/20 rounded-full mt-1"></div>
+            </div>
          </div>
-         <div id="save-indicator" class="text-[9px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-200"></span>
-            SAVED
+
+         <div class="flex items-center gap-6">
+            <div id="save-indicator" class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 bg-bg-soft px-4 py-2 rounded-full border border-border-light">
+               <span class="w-2 h-2 rounded-full bg-green-400"></span>
+               AUTOSAVE: ON
+            </div>
+            <button class="px-6 py-3 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-card hover:brightness-110 active:scale-95 transition-all flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+              Share Board
+            </button>
          </div>
       </header>
 
-      <div class="flex-1 overflow-y-auto px-8 py-12 flex justify-center bg-gray-50/30 scrollbar-hide" id="editor-scroll">
-         <div class="w-full max-w-4xl flex flex-col">
+      <div class="flex-1 overflow-y-auto px-6 py-12 flex justify-center bg-bg-canvas scrollbar-hide relative" id="editor-scroll">
+         <div class="w-full max-w-3xl flex flex-col items-center">
             <!-- Floating Toolbar -->
-            <div class="sticky top-0 z-[100] flex justify-center mb-8">
-               <div class="bg-white/90 backdrop-blur-xl border border-gray-200 shadow-xl rounded-2xl p-1.5 flex items-center gap-1">
+            <div class="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
+               <div class="bg-white/95 backdrop-blur-xl border border-border-light shadow-floating rounded-full p-2 flex items-center gap-1.5">
                   <button data-cmd="bold" class="tool-btn" title="Bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"></path></svg></button>
                   <button data-cmd="italic" class="tool-btn" title="Italic"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 20l4-16m-9 16h5m1-16h5"></path></svg></button>
                   <button data-cmd="underline" class="tool-btn" title="Underline"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 3v7a5 5 0 0010 0V3M5 20h14"></path></svg></button>
-                  <div class="w-px h-4 bg-gray-100 mx-1"></div>
+                  <div class="w-px h-5 bg-border-light mx-1"></div>
                   <button data-cmd="formatBlock" data-val="H1" class="tool-btn text-[10px] font-black">H1</button>
                   <button data-cmd="formatBlock" data-val="H2" class="tool-btn text-[10px] font-black">H2</button>
-                  <button data-cmd="formatBlock" data-val="P" class="tool-btn text-[10px] font-black">P</button>
-                  <div class="w-px h-4 bg-gray-100 mx-1"></div>
+                  <button data-cmd="formatBlock" data-val="BLOCKQUOTE" class="tool-btn" title="Production Note">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+                  </button>
+                  <div class="w-px h-5 bg-border-light mx-1"></div>
                   <button data-cmd="insertUnorderedList" class="tool-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16M4 6h.01M4 12h.01M4 18h.01"></path></svg></button>
                   <button data-cmd="undo" class="tool-btn ml-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg></button>
-                  <button data-cmd="redo" class="tool-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"></path></svg></button>
                </div>
             </div>
 
             <div id="script-canvas" contenteditable="true" 
-                 class="min-h-[800px] w-full bg-white rounded-md shadow-sm border border-gray-100 p-20 focus:outline-none text-[15px] leading-[1.8] text-[#2C2C2C] font-normal empty:before:content-[attr(data-placeholder)] empty:before:text-gray-200"
+                 class="min-h-[800px] w-full bg-white rounded-[40px] shadow-card border border-border-light p-16 md:p-24 focus:outline-none text-[16px] leading-[2] text-text-main font-normal empty:before:content-[attr(data-placeholder)] empty:before:text-gray-200"
                  data-placeholder="Once upon a time..."></div>
          </div>
       </div>
 
-      <footer class="h-10 border-t border-gray-100 px-8 flex items-center justify-between shrink-0 bg-white z-50">
-         <div class="flex items-center gap-6">
-            <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest"><span id="word-count">0</span> WORDS</span>
-            <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest"><span id="char-count">0</span> CHARACTERS</span>
+      <footer class="h-14 border-t border-border-light px-10 flex items-center justify-between shrink-0 bg-white z-50">
+         <div class="flex items-center gap-8">
+            <span class="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2">
+              <span id="word-count" class="text-primary">0</span> WORDS
+            </span>
+            <span class="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2">
+              <span id="char-count" class="text-primary">0</span> CHARS
+            </span>
          </div>
-         <span class="text-[9px] font-black text-gray-200 uppercase tracking-widest">Boardnify Editor v3.0</span>
+         <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+            <span class="text-[10px] font-black text-primary uppercase tracking-widest">Online Sync Active</span>
+         </div>
       </footer>
     </div>
   `;
@@ -137,20 +156,23 @@ window.initScript = function(container, socket, projectId) {
         const excerpt = s.content ? s.content.replace(/<[^>]*>/g, '').substring(0, 80) : 'No content yet...';
         const dateStr = formatHumanDate(s.updated_at);
         return `
-          <div class="script-card relative bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 smooth-transition group cursor-pointer" onclick="window.enterScript('${s.id}')">
-            <div class="absolute top-4 right-4 z-10">
-               <button class="p-2 text-gray-300 hover:text-text-dark transition-colors" onclick="event.stopPropagation(); window.toggleScriptMenu(this, '${s.id}')">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 5v.01M12 12v.01M12 19v.01"></path></svg>
+          <div class="script-card relative bg-white rounded-3xl p-8 border border-border-light shadow-subtle hover:shadow-card hover:-translate-y-1.5 transition-all duration-300 group cursor-pointer" onclick="window.enterScript('${s.id}')">
+            <div class="absolute top-6 right-6 z-10">
+               <button class="p-3 bg-bg-soft rounded-xl text-gray-400 hover:text-primary transition-colors" onclick="event.stopPropagation(); window.toggleScriptMenu(this, '${s.id}')">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 5v.01M12 12v.01M12 19v.01"></path></svg>
                </button>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 mb-6 group-hover:bg-brand/10 group-hover:text-brand transition-colors">
-               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <div class="w-14 h-14 rounded-2xl bg-primary/5 flex items-center justify-center text-primary mb-8 group-hover:scale-110 transition-transform">
+               <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             </div>
-            <h3 class="text-sm font-bold text-text-dark mb-2 truncate pr-6">${s.title}</h3>
-            <p class="text-[11px] text-text-muted leading-relaxed line-clamp-3 mb-6">${excerpt}</p>
-            <div class="flex items-center justify-between pt-4 border-t border-gray-50">
-               <span class="px-2 py-0.5 rounded-full bg-gray-50 text-[8px] font-black uppercase tracking-widest text-text-muted">${s.source || 'TYPED'}</span>
-               <span class="text-[9px] font-bold text-gray-300 uppercase tracking-tighter">${dateStr}</span>
+            <h3 class="text-lg font-black text-text-main mb-3 truncate pr-10 font-['Cabinet_Grotesk']">${s.title}</h3>
+            <p class="text-[13px] text-text-muted leading-relaxed line-clamp-3 mb-8 font-medium">${excerpt}</p>
+            <div class="flex items-center justify-between pt-6 border-t border-gray-50">
+               <div class="flex items-center gap-2">
+                 <div class="w-2 h-2 rounded-full bg-primary/40"></div>
+                 <span class="text-[10px] font-black uppercase tracking-widest text-primary opacity-60">${s.source || 'TYPED'}</span>
+               </div>
+               <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest">${dateStr}</span>
             </div>
           </div>
         `;
@@ -468,15 +490,34 @@ window.initScript = function(container, socket, projectId) {
   const style = document.createElement('style');
   style.innerHTML = `
     .tool-btn {
-      width: 32px; height: 32px; display: flex; items-center; justify-center; 
-      color: #64748b; border-radius: 10px; transition: all 0.2s;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-center; 
+      color: #64748b; border-radius: 100px; transition: all 0.2s;
     }
-    .tool-btn:hover { background: #f1f5f9; color: #020617; }
-    .tool-btn:active { background: #e2e8f0; }
+    .tool-btn:hover { background: #F5F4FF; color: var(--primary); transform: scale(1.1); }
+    .tool-btn:active { transform: scale(0.9); }
     
-    #script-canvas h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
-    #script-canvas h2 { font-size: 1.5rem; font-weight: 800; margin-top: 2.5rem; margin-bottom: 1rem; color: #1a1a1a; }
-    #script-canvas p { margin-bottom: 1.2rem; }
+    #script-canvas h1 { font-family: 'Cabinet Grotesk', sans-serif; font-size: 2.75rem; font-weight: 900; margin-bottom: 2rem; letter-spacing: -0.03em; color: var(--text-main); }
+    #script-canvas h2 { font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.75rem; font-weight: 800; margin-top: 3rem; margin-bottom: 1.5rem; color: var(--text-main); }
+    #script-canvas p { margin-bottom: 1.5rem; color: #4B4B4B; }
+    #script-canvas blockquote {
+      background: #F8F7FF;
+      border-left: 4px solid var(--primary);
+      padding: 24px;
+      border-radius: 0 24px 24px 0;
+      margin: 2rem 0;
+      font-style: italic;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    #script-canvas blockquote:before {
+      content: 'PRODUCTION NOTE';
+      display: block;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
   `;
   document.head.appendChild(style);
 };

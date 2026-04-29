@@ -1,16 +1,17 @@
 :root {
   /* New Boardnify Purple Bento Design System */
-  --primary: #6B21FF;
-  --primary-light: #F4F3FF;
-  --bg-main: #F4F3FF;
+  --primary: #6B46FA;
+  --primary-light: #F5F4FF;
+  --bg-main: #FFFFFF;
+  --bg-soft: #F5F4FF;
   --bg-white: #FFFFFF;
-  --bg-canvas: #F4F3FF;
+  --bg-canvas: #F5F4FF;
   
-  --text-main: #1A1916;
+  --text-main: #1A1035;
   --text-muted: #6B6B6B;
   --text-tiny: #A09D98;
   
-  --border-light: #E8E7F0;
+  --border-light: #E5E0FF;
   --border-medium: #D8D7E0;
   
   --radius-xl: 32px;
@@ -18,12 +19,15 @@
   --radius-md: 16px;
   --radius-sm: 8px;
   
-  --shadow-subtle: 0 4px 12px rgba(107, 33, 255, 0.04);
-  --shadow-card: 0 8px 24px rgba(107, 33, 255, 0.08);
-  --shadow-floating: 0 16px 48px rgba(107, 33, 255, 0.12);
+  --shadow-subtle: 0 4px 12px rgba(107, 70, 250, 0.04);
+  --shadow-card: 0 8px 24px rgba(107, 70, 250, 0.08);
+  --shadow-floating: 0 16px 48px rgba(107, 70, 250, 0.12);
   
   --topbar-height: 64px;
   --sidebar-width: 288px;
+  
+  /* Mobile Constraint */
+  --max-app-width: 430px;
 }
 
 * {
@@ -86,10 +90,33 @@ body {
   opacity: 0.9;
 }
 
+.m-card {
+  position: absolute;
+  pointer-events: auto;
+  user-select: none;
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-subtle);
+  transition: outline 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.m-card:hover {
+  outline: 2px solid var(--primary-light);
+  box-shadow: var(--shadow-card);
+}
+
+.m-card.selected {
+  outline: 2px solid var(--primary) !important;
+  box-shadow: var(--shadow-floating);
+  z-index: 5000 !important;
+}
+
 .m-card [contenteditable="true"] {
   cursor: text !important;
 }
 
+.m-card:active { cursor: grabbing; }
 .m-card-link-inner a, .m-card-video-footer a {
   cursor: pointer !important;
 }

@@ -2,240 +2,269 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Boardnify - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Boardnify - Welcome Back</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --brand: #7C6FF7;
-      --brand-light: #EDE9FE;
-      --brand-dark: #6a5de8;
-      --bg: #F0EFED;
-      --surface: #FFFFFF;
-      --surface2: #F9F9F8;
-      --border: #E2E0DC;
-      --text: #1A1916;
-      --text-muted: #A09D98;
-      --error: #EF4444;
-      --success: #22C55E;
+      --primary: #6B46FA;
+      --primary-hover: #5A39E0;
+      --bg-main: #FFFFFF;
+      --bg-soft: #F5F4FF;
+      --border: #E5E0FF;
+      --text-dark: #1A1035;
+      --text-muted: #6B6B6B;
+      --error: #FF4D4D;
+      --success: #00C853;
     }
 
     body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      background-image: radial-gradient(#D5D3D1 1px, transparent 1px);
-      background-size: 24px 24px;
-      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-soft);
+      color: var(--text-dark);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      position: relative;
+      padding: 20px;
     }
 
-    .card {
-      position: relative; z-index: 1; width: 100%; max-width: 400px; margin: 1rem;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .container {
+      width: 100%;
+      max-width: 430px;
+      background: var(--bg-main);
+      border-radius: 32px;
+      padding: 48px 32px;
+      box-shadow: 0 12px 48px rgba(107, 70, 250, 0.08);
+      text-align: center;
     }
 
     .logo {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 32px;
+      gap: 12px;
+      margin-bottom: 40px;
     }
+
     .logo-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--brand);
-      border-radius: 6px;
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Cabinet Grotesk', sans-serif;
       font-weight: 800;
-      font-size: 16px;
+      font-size: 24px;
       color: white;
     }
+
     .logo-text {
-      font-family: 'Cabinet Grotesk', sans-serif;
       font-weight: 800;
-      font-size: 20px;
-      color: var(--text);
-      letter-spacing: -0.5px;
+      font-size: 24px;
+      letter-spacing: -0.04em;
     }
 
     .heading {
-      font-family: 'Cabinet Grotesk', sans-serif;
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: -0.5px;
-      margin-bottom: 4px;
-    }
-    .subheading {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-bottom: 32px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
     }
 
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 28px;
-    }
-    .tab {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      background: transparent;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
+    .subheading {
+      font-size: 15px;
       color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.2s;
-      border-bottom: 2px solid transparent;
-    }
-    .tab.active {
-      color: var(--brand);
-      border-bottom-color: var(--brand);
+      margin-bottom: 40px;
     }
 
     .form-group {
-      margin-bottom: 20px;
+      text-align: left;
+      margin-bottom: 24px;
     }
+
     label {
       display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text-dark);
     }
+
     input {
       width: 100%;
-      padding: 12px 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+      height: 56px;
+      padding: 0 20px;
+      background: var(--bg-soft);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-dark);
       outline: none;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
+
     input:focus {
-      border-color: var(--brand);
-      background: var(--surface);
-      box-shadow: 0 0 0 4px rgba(124,111,247,0.1);
+      border-color: var(--primary);
+      background: #FFFFFF;
+      box-shadow: 0 0 0 4px rgba(107, 70, 250, 0.1);
+    }
+
+    input::placeholder {
+      color: #A0A0A0;
     }
 
     .btn {
       width: 100%;
-      padding: 12px;
-      background: var(--brand);
+      height: 56px;
+      background: var(--primary);
       border: none;
-      border-radius: 8px;
+      border-radius: 16px;
       color: white;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 700;
       cursor: pointer;
       margin-top: 8px;
-      transition: all 0.2s;
-    }
-    .btn:hover { opacity: 0.9; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    #google-btn {
-      width: 100%;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      background: white;
-      border: 1px solid var(--border);
-      padding: 12px;
-      border-radius: 8px;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(107, 70, 250, 0.25);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .footer-note {
+      margin-top: 32px;
       font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      cursor: pointer;
-      margin-bottom: 24px;
-      transition: all 0.2s;
+      font-weight: 500;
+      color: var(--text-muted);
     }
-    #google-btn:hover { background: var(--surface2); }
 
-    .alert {
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      display: none;
-    }
-    .alert.error { background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; }
-    .alert.success { background: #DCFCE7; color: #16A34A; border: 1px solid #86EFAC; }
-    .alert.show { display: block; }
-
-    .forgot {
-      text-align: right; margin-top: -12px; margin-bottom: 20px;
-    }
-    .forgot a {
-      font-size: 12px;
-      color: var(--brand);
+    .footer-note a {
+      color: var(--primary);
       text-decoration: none;
       font-weight: 700;
     }
 
-    .footer-note {
-      text-align: center;
-      font-size: 11px;
-      font-weight: 500;
+    .alert {
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      display: none;
+      text-align: left;
+    }
+
+    .alert.error {
+      background: #FFF0F0;
+      color: var(--error);
+      border: 1px solid #FFE0E0;
+    }
+
+    .alert.success {
+      background: #F0FFF4;
+      color: var(--success);
+      border: 1px solid #E0FFE0;
+    }
+
+    .alert.show {
+      display: block;
+    }
+
+    .forgot-password {
+      display: block;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+      margin-top: -12px;
+      margin-bottom: 24px;
+    }
+
+    /* Tabs for Sign In / Sign Up */
+    .tabs {
+      display: flex;
+      background: var(--bg-soft);
+      padding: 6px;
+      border-radius: 14px;
+      margin-bottom: 32px;
+    }
+
+    .tab {
+      flex: 1;
+      height: 40px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
       color: var(--text-muted);
-      margin-top: 32px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .tab.active {
+      background: #FFFFFF;
+      color: var(--primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
 
     .panel { display: none; }
     .panel.active { display: block; }
 
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #FFFFFF;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
   </style>
 </head>
 <body>
-  <div class="bg-glow"></div>
-  <div class="bg-grid"></div>
-
-  <div class="card">
+  <div class="container">
     <div class="logo">
       <div class="logo-icon">B</div>
       <span class="logo-text">Boardnify</span>
     </div>
 
-    <h1 class="heading">Welcome back</h1>
-    <p class="subheading">Sign in to your creative workspace.</p>
+    <h1 class="heading" id="auth-title">Welcome back</h1>
+    <p class="subheading" id="auth-subtitle">Sign in to your creative workspace.</p>
 
     <div class="tabs">
       <button class="tab active" onclick="switchTab('login')">Sign In</button>
       <button class="tab" onclick="switchTab('signup')">Create Account</button>
     </div>
-
-    <button id="google-btn" onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white text-gray-800 font-bold py-3 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition mb-4">
-      <img src="https://www.google.com/favicon.ico" width="18" height="18"> Continue with Google
-    </button>
 
     <div id="alert-box" class="alert"></div>
 
@@ -249,7 +278,7 @@
         <label for="login-password">Password</label>
         <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
       </div>
-      <div class="forgot"><a href="#" onclick="handleForgotPassword()">Forgot password?</a></div>
+      <a href="#" class="forgot-password" onclick="handleForgotPassword()">Forgot password?</a>
       <button class="btn" id="login-btn" onclick="handleLogin()">Sign In</button>
     </div>
 
@@ -257,7 +286,7 @@
     <div id="panel-signup" class="panel">
       <div class="form-group">
         <label for="signup-name">Full Name</label>
-        <input type="text" id="signup-name" placeholder="Your name" autocomplete="name">
+        <input type="text" id="signup-name" placeholder="Timothy Goodman" autocomplete="name">
       </div>
       <div class="form-group">
         <label for="signup-email">Email Address</label>
@@ -270,33 +299,39 @@
       <button class="btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
     </div>
 
-    <div class="footer-note">Boardnify &copy; 2026 &mdash; Creative Collaboration Platform</div>
+    <div class="footer-note" id="mode-switch-note">
+      Don't have an account? <a href="#" onclick="switchTab('signup')">Sign Up</a>
+    </div>
   </div>
 
   <script>
-    // ─── Supabase Init ───────────────────────────────────────────────
     const SUPABASE_URL = 'https://mazkugyfjwubsfgcedfl.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hemt1Z3lmand1YnNmZ2NlZGZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NjY4OTEsImV4cCI6MjA4OTI0Mjg5MX0.vKSTWea3-KpRCPEXvY46kf_Dj85TKNgFZ3noGrn4ztI';
     const { createClient } = supabase;
     const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ─── Redirect if already logged in ──────────────────────────────
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (session) window.location.href = 'index.html';
     })();
 
-    // ─── Tab switching ───────────────────────────────────────────────
     function switchTab(tab) {
+      const isLogin = tab === 'login';
       document.querySelectorAll('.tab').forEach((t, i) => {
-        t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'signup' && i === 1));
+        t.classList.toggle('active', (isLogin && i === 0) || (!isLogin && i === 1));
       });
-      document.getElementById('panel-login').classList.toggle('active', tab === 'login');
-      document.getElementById('panel-signup').classList.toggle('active', tab === 'signup');
+      document.getElementById('panel-login').classList.toggle('active', isLogin);
+      document.getElementById('panel-signup').classList.toggle('active', !isLogin);
+      
+      document.getElementById('auth-title').textContent = isLogin ? 'Welcome back' : 'Get started';
+      document.getElementById('auth-subtitle').textContent = isLogin ? 'Sign in to your creative workspace.' : 'Create your free account today.';
+      document.getElementById('mode-switch-note').innerHTML = isLogin 
+        ? `Don't have an account? <a href="#" onclick="switchTab('signup')">Sign Up</a>`
+        : `Already have an account? <a href="#" onclick="switchTab('login')">Log In</a>`;
+      
       hideAlert();
     }
 
-    // ─── Alert helpers ───────────────────────────────────────────────
     function showAlert(msg, type = 'error') {
       const el = document.getElementById('alert-box');
       el.textContent = msg;
@@ -306,16 +341,12 @@
       document.getElementById('alert-box').className = 'alert';
     }
 
-    // ─── Set button loading state ────────────────────────────────────
     function setLoading(btnId, loading, defaultText) {
       const btn = document.getElementById(btnId);
       btn.disabled = loading;
-      btn.innerHTML = loading
-        ? `<span class="btn-spinner"></span> Please wait...`
-        : defaultText;
+      btn.innerHTML = loading ? `<div class="spinner"></div>` : defaultText;
     }
 
-    // ─── Login ───────────────────────────────────────────────────────
     async function handleLogin() {
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
@@ -331,7 +362,6 @@
       window.location.href = 'index.html';
     }
 
-    // ─── Sign Up ─────────────────────────────────────────────────────
     async function handleSignup() {
       const name = document.getElementById('signup-name').value.trim();
       const email = document.getElementById('signup-email').value.trim();
@@ -352,7 +382,6 @@
       showAlert('Account created! Check your email to confirm, then sign in.', 'success');
     }
 
-    // ─── Forgot Password ─────────────────────────────────────────────
     async function handleForgotPassword() {
       const email = document.getElementById('login-email').value.trim();
       if (!email) return showAlert('Enter your email above first, then click Forgot Password.');
@@ -364,18 +393,6 @@
       showAlert('Password reset email sent! Check your inbox.', 'success');
     }
 
-    // ─── Google OAuth ────────────────────────────────────────────────
-    async function handleGoogleLogin() {
-      const { error } = await sb.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/index.html'
-        }
-      });
-      if (error) showAlert(error.message);
-    }
-
-    // ─── Enter key support ───────────────────────────────────────────
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter') return;
       const loginActive = document.getElementById('panel-login').classList.contains('active');
@@ -385,4 +402,3 @@
   </script>
 </body>
 </html>
-
